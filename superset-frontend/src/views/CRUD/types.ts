@@ -32,6 +32,10 @@ export enum TableTab {
   Viewed = 'Viewed',
   Created = 'Created',
   Edited = 'Edited',
+
+  Strategic = 'Strategic',
+  Operating = 'Operating',
+  CompanyLevel = 'CompanyLevel',
 }
 
 export type Filter = {

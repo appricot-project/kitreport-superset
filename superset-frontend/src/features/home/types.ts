@@ -23,6 +23,7 @@ import { NavBarProps, MenuObjectProps } from 'src/types/bootstrapTypes';
 export enum WelcomeTable {
   Charts = 'CHARTS',
   Dashboards = 'DASHBOARDS',
+  MaterialLibrary = 'MATERIAL_LIBRARY',
   Recents = 'RECENTS',
   SavedQueries = 'SAVED_QUERIES',
 }

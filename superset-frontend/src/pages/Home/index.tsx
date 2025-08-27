@@ -49,6 +49,7 @@ import { Switch } from '@superset-ui/core/components/Switch';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { TableTab } from 'src/views/CRUD/types';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
+import MaterialLibrary from 'src/features/home/MaterialLibrary';
 import { userHasPermission } from 'src/dashboard/util/permissionUtils';
 import { WelcomePageLastTab } from 'src/features/home/types';
 import ActivityTable from 'src/features/home/ActivityTable';
@@ -412,6 +413,16 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                         otherTabFilters={otherTabFilters}
                         otherTabTitle={otherTabTitle}
                       />
+                    ),
+                },
+                {
+                  key: 'material-library',
+                  label: 'Material library',
+                  children:
+                    materialData && activeChild !== 'Loading' ? (
+                      <MaterialLibrary data={materialData} />
+                    ) : (
+                      <LoadingCards />
                     ),
                 },
                 ...(canReadSavedQueries

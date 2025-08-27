@@ -44,6 +44,7 @@ const REDIRECTS = {
   create: {
     [WelcomeTable.Charts]: '/chart/add',
     [WelcomeTable.Dashboards]: '/dashboard/new',
+    [WelcomeTable.MaterialLibrary]: '/',
     [WelcomeTable.SavedQueries]: '/sqllab?new=true',
   },
   viewAll: {
@@ -76,8 +77,12 @@ export default function EmptyState({ tableName, tab }: EmptyStateProps) {
           : tableName.slice(0, -1);
 
     const url = isFavorite
-      ? REDIRECTS.viewAll[tableName]
-      : REDIRECTS.create[tableName];
+      ? tableName in REDIRECTS.viewAll
+        ? REDIRECTS.viewAll[tableName as keyof typeof REDIRECTS.viewAll]
+        : '/'
+      : tableName in REDIRECTS.create
+        ? REDIRECTS.create[tableName as keyof typeof REDIRECTS.create]
+        : '/';
 
     return (
       <Button
@@ -94,7 +99,11 @@ export default function EmptyState({ tableName, tab }: EmptyStateProps) {
   };
 
   const image =
-    tab === TableTab.Favorite ? 'star-circle.svg' : ICONS[tableName];
+    tab === TableTab.Favorite
+      ? 'star-circle.svg'
+      : ICONS.hasOwnProperty(tableName)
+        ? ICONS[tableName as keyof typeof ICONS]
+        : 'empty.svg';
 
   return (
     <EmptyContainer>
