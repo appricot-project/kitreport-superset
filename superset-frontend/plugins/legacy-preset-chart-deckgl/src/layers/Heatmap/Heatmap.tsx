@@ -63,7 +63,7 @@ export const getLayer: GetLayerType<HeatmapLayer> = ({
 
   const colorScale = getSequentialSchemeRegistry()
     ?.get(colorScheme)
-    ?.createLinearScale([0, 6]);
+    ?.createLinearScale([0, 6]) as any;
 
   const colorSchemeType = fd.color_scheme_type;
   const colorRange = getColorRange({

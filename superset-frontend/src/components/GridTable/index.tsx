@@ -179,7 +179,7 @@ export function GridTable<RecordType extends object>({
         isExternalFilterPresent={isExternalFilterPresent}
         doesExternalFilterPass={externalFilter}
         components={gridComponents}
-        gridOptions={gridOptions}
+        gridOptions={gridOptions as any}
         onCellKeyDown={onKeyDown}
       />
     </div>

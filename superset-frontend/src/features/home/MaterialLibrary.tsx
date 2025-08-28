@@ -6,62 +6,6 @@ import { TableTab } from 'src/views/CRUD/types';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu from './SubMenu';
 
-const mockMaterialData = {
-  folders: [
-    {
-      title: 'Стратегический уровень',
-      items: [
-        {
-          title: 'Стратегический-1.pdf',
-          size_in_bytes: '395000',
-          url: 'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%C2%AB%D0%A2%D1%80%D0%B8_%D0%9A%D0%B8%D1%82%D0%B0%C2%BB_%D0%B2%D0%B0%D1%80_1.pdf',
-          published_at: '2025-08-04T10:00:00Z',
-        },
-        {
-          title: 'Стратегический-2.pdf',
-          size_in_bytes: '100000',
-          url: 'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%C2%AB%D0%A2%D1%80%D0%B8_%D0%9A%D0%B8%D1%82%D0%B0%C2%BB_%D0%B2%D0%B0%D1%80_1.pdf',
-          published_at: '2025-01-01T01:00:00Z',
-        },
-      ],
-    },
-    {
-      title: 'Операционный уровень',
-      items: [
-        {
-          title: 'Операционный-1.pdf',
-          size_in_bytes: '395000',
-          url: 'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%C2%AB%D0%A2%D1%80%D0%B8_%D0%9A%D0%B8%D1%82%D0%B0%C2%BB_%D0%B2%D0%B0%D1%80_1.pdf',
-          published_at: '2025-08-04T10:00:00Z',
-        },
-        {
-          title: 'Операционный-2.pdf',
-          size_in_bytes: '100000',
-          url: 'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%C2%AB%D0%A2%D1%80%D0%B8_%D0%9A%D0%B8%D1%82%D0%B0%C2%BB_%D0%B2%D0%B0%D1%80_1.pdf',
-          published_at: '2025-01-01T01:00:00Z',
-        },
-      ],
-    },
-    {
-      title: 'Уровень компании',
-      items: [
-        {
-          title: 'Уровень-компании-1.pdf',
-          size_in_bytes: '395000',
-          url: 'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%C2%AB%D0%A2%D1%80%D0%B8_%D0%9A%D0%B8%D1%82%D0%B0%C2%BB_%D0%B2%D0%B0%D1%80_1.pdf',
-          published_at: '2025-08-04T10:00:00Z',
-        },
-        {
-          title: 'Уровень-компании-2.pdf',
-          size_in_bytes: '100000',
-          url: 'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%C2%AB%D0%A2%D1%80%D0%B8_%D0%9A%D0%B8%D1%82%D0%B0%C2%BB_%D0%B2%D0%B0%D1%80_1.pdf',
-          published_at: '2025-01-01T01:00:00Z',
-        },
-      ],
-    },
-  ],
-};
-
 const CardGrid = styled.div`
   display: flex;
   gap: 16px;
@@ -184,8 +128,6 @@ function useMaterialManifest() {
 
 function MaterialLibrary() {
   const [activeTab, setActiveTab] = useState<MaterialTab>(TableTab.Strategic);
-  // const data = mockMaterialData;
-  // const isLoading = false;
   const { data, isLoading } = useMaterialManifest();
 
   const menuTabs = [
