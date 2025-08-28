@@ -419,8 +419,8 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                   key: 'material-library',
                   label: 'Material library',
                   children:
-                    materialData && activeChild !== 'Loading' ? (
-                      <MaterialLibrary data={materialData} />
+                    activeChild !== 'Loading' ? (
+                      <MaterialLibrary />
                     ) : (
                       <LoadingCards />
                     ),

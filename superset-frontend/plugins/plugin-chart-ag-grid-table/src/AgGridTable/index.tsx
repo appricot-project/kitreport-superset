@@ -299,17 +299,17 @@ const AgGridDataTable: FunctionComponent<AgGridTableProps> = memo(
 
         <ThemedAgGridReact
           ref={gridRef}
-          onGridReady={onGridReady}
+          onGridReady={onGridReady as any}
           className="ag-container"
           rowData={rowData}
           headerHeight={36}
           rowHeight={30}
           columnDefs={colDefsFromProps}
-          defaultColDef={defaultColDef}
+          defaultColDef={defaultColDef as any}
           onColumnGroupOpened={params => params.api.sizeColumnsToFit()}
           rowSelection="multiple"
           animateRows
-          onCellClicked={handleCrossFilter}
+          onCellClicked={handleCrossFilter as any}
           initialState={gridInitialState}
           suppressAggFuncInHeader
           rowGroupPanelShow="always"
