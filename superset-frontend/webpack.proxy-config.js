@@ -31,10 +31,11 @@ const parsedEnvArg = () => {
   return { ...process.env, ...envArgs };
 };
 const { supersetPort = 8088, superset: supersetUrl = null } = parsedEnvArg();
-const backend = (supersetUrl || `http://localhost:${supersetPort}`).replace(
-  '//+$/',
-  '',
-); // strip ending backslash
+// const backend = (supersetUrl || `http://localhost:${supersetPort}`).replace(
+//   '//+$/',
+//   '',
+// ); // strip ending backslash
+const backend = 'http://147.45.175.242:8088';
 
 let manifest;
 function isHTML(res) {
