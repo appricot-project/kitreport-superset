@@ -52,10 +52,10 @@ import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import MaterialLibrary from 'src/features/home/MaterialLibrary';
 import { userHasPermission } from 'src/dashboard/util/permissionUtils';
 import { WelcomePageLastTab } from 'src/features/home/types';
-import ActivityTable from 'src/features/home/ActivityTable';
-import ChartTable from 'src/features/home/ChartTable';
-import SavedQueries from 'src/features/home/SavedQueries';
-import DashboardTable from 'src/features/home/DashboardTable';
+// import ActivityTable from 'src/features/home/ActivityTable';
+// import ChartTable from 'src/features/home/ChartTable';
+// import SavedQueries from 'src/features/home/SavedQueries';
+// import DashboardTable from 'src/features/home/DashboardTable';
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -168,7 +168,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
   const [dashboardData, setDashboardData] = useState<Array<object> | null>(
     null,
   );
-  const [isFetchingActivityData, setIsFetchingActivityData] = useState(true);
+  // const [isFetchingActivityData, setIsFetchingActivityData] = useState(true);
 
   const collapseState = getItem(LocalStorageKeys.HomepageCollapseState, []);
   const [activeState, setActiveState] = useState<Array<string>>(collapseState);
@@ -185,7 +185,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     'welcome.main.replacement',
   );
 
-  const [otherTabTitle, otherTabFilters] = useMemo(() => {
+  const [_, otherTabFilters] = useMemo(() => {
     const lastTab = bootstrapData.common?.conf
       .WELCOME_PAGE_LAST_TAB as WelcomePageLastTab;
     const [customTitle, customFilter] = Array.isArray(lastTab)
@@ -289,7 +289,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
             })
         : Promise.resolve(),
     ]).then(() => {
-      setIsFetchingActivityData(false);
+      // setIsFetchingActivityData(false);
     });
   }, [otherTabFilters]);
 
@@ -318,8 +318,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     }
   }, [activityData]);
 
-  const isRecentActivityLoading =
-    !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
+  // const isRecentActivityLoading = !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
 
   const menuData: SubMenuProps = {
     activeChild: 'Home',
@@ -361,60 +360,58 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
               onChange={handleCollapse}
               ghost
               items={[
-                {
-                  key: 'recents',
-                  label: t('Recents'),
-                  children:
-                    activityData &&
-                    (activityData[TableTab.Viewed] ||
-                      activityData[TableTab.Other] ||
-                      activityData[TableTab.Created]) &&
-                    activeChild !== 'Loading' ? (
-                      <ActivityTable
-                        user={{ userId: user.userId! }} // user is definitely not a guest user on this page
-                        activeChild={activeChild}
-                        setActiveChild={setActiveChild}
-                        activityData={activityData}
-                        isFetchingActivityData={isFetchingActivityData}
-                      />
-                    ) : (
-                      <LoadingCards />
-                    ),
-                },
-                {
-                  key: 'dashboards',
-                  label: t('Dashboards'),
-                  children:
-                    !dashboardData || isRecentActivityLoading ? (
-                      <LoadingCards cover={checked} />
-                    ) : (
-                      <DashboardTable
-                        user={user}
-                        mine={dashboardData}
-                        showThumbnails={checked}
-                        otherTabData={activityData?.[TableTab.Other]}
-                        otherTabFilters={otherTabFilters}
-                        otherTabTitle={otherTabTitle}
-                      />
-                    ),
-                },
-                {
-                  key: 'charts',
-                  label: t('Charts'),
-                  children:
-                    !chartData || isRecentActivityLoading ? (
-                      <LoadingCards cover={checked} />
-                    ) : (
-                      <ChartTable
-                        showThumbnails={checked}
-                        user={user}
-                        mine={chartData}
-                        otherTabData={activityData?.[TableTab.Other]}
-                        otherTabFilters={otherTabFilters}
-                        otherTabTitle={otherTabTitle}
-                      />
-                    ),
-                },
+                // {
+                //   key: 'recents',
+                //   label: t('Recents'),
+                //   children:
+                //     activityData &&
+                //     (activityData[TableTab.Viewed] ||
+                //       activityData[TableTab.Other] ||
+                //       activityData[TableTab.Created]) &&
+                //     activeChild !== 'Loading' ? (
+                //       <ActivityTable
+                //         user={{ userId: user.userId! }} // user is definitely not a guest user on this page
+                //         activeChild={activeChild}
+                //         setActiveChild={setActiveChild}
+                //         activityData={activityData}
+                //         isFetchingActivityData={isFetchingActivityData}
+                //       />
+                //     ) : (
+                //       <LoadingCards />
+                //     ),
+                // },
+                // {
+                //   key: 'dashboards',
+                //   label: t('Dashboards'),
+                //   children: !dashboardData || isRecentActivityLoading ? (
+                //       <LoadingCards cover={checked} />
+                //     ) : (
+                //       <DashboardTable
+                //         user={user}
+                //         mine={dashboardData}
+                //         showThumbnails={checked}
+                //         otherTabData={activityData?.[TableTab.Other]}
+                //         otherTabFilters={otherTabFilters}
+                //         otherTabTitle={otherTabTitle}
+                //       />
+                //     ),
+                // },
+                // {
+                //   key: 'charts',
+                //   label: t('Charts'),
+                //   children: !chartData || isRecentActivityLoading ? (
+                //       <LoadingCards cover={checked} />
+                //     ) : (
+                //       <ChartTable
+                //         showThumbnails={checked}
+                //         user={user}
+                //         mine={chartData}
+                //         otherTabData={activityData?.[TableTab.Other]}
+                //         otherTabFilters={otherTabFilters}
+                //         otherTabTitle={otherTabTitle}
+                //       />
+                //     ),
+                // },
                 {
                   key: 'material-library',
                   label: 'Material library',
@@ -425,24 +422,24 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                       <LoadingCards />
                     ),
                 },
-                ...(canReadSavedQueries
-                  ? [
-                      {
-                        key: 'saved-queries',
-                        label: t('Saved queries'),
-                        children: !queryData ? (
-                          <LoadingCards cover={checked} />
-                        ) : (
-                          <SavedQueries
-                            showThumbnails={checked}
-                            user={user}
-                            mine={queryData}
-                            featureFlag={isThumbnailsEnabled}
-                          />
-                        ),
-                      },
-                    ]
-                  : []),
+                // ...(canReadSavedQueries
+                //   ? [
+                //       {
+                //         key: 'saved-queries',
+                //         label: t('Saved queries'),
+                //         children: !queryData ? (
+                //           <LoadingCards cover={checked} />
+                //         ) : (
+                //           <SavedQueries
+                //             showThumbnails={checked}
+                //             user={user}
+                //             mine={queryData}
+                //             featureFlag={isThumbnailsEnabled}
+                //           />
+                //         ),
+                //       },
+                //     ]
+                //   : []),
               ]}
             />
           </>
