@@ -19,11 +19,8 @@
       "@superset-ui/switchboard": ["./packages/superset-ui-switchboard/src"]
     },
     "typeRoots": ["src/types", "node_modules/@types"]
-
   },
-  "exclude": [
-    "./packages/generator-superset/test/**/*"
-  ],
+  "exclude": ["./packages/generator-superset/test/**/*"],
   "include": [
     "./src/**/*",
     "./spec/**/*",
@@ -32,6 +29,7 @@
     "./plugins/*/src/**/*",
     "./plugins/*/types/**/*",
     "./packages/*/test/**/*",
-    "./plugins/*/test/**/*"
+    "./plugins/*/test/**/*",
+    "./branding/**/*"
   ]
 }

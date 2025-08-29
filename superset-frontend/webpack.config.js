@@ -17,6 +17,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
@@ -122,6 +123,7 @@ const plugins = [
     'process.env.REDUX_DEFAULT_MIDDLEWARE':
       process.env.REDUX_DEFAULT_MIDDLEWARE,
     'process.env.SCARF_ANALYTICS': JSON.stringify(process.env.SCARF_ANALYTICS),
+    'process.env.REACT_APP_BRAND': JSON.stringify(process.env.REACT_APP_BRAND),
   }),
 
   new CopyPlugin({
