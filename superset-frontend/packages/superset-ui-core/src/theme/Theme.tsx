@@ -55,22 +55,26 @@ import {
 } from './types';
 
 import { normalizeThemeConfig, serializeThemeConfig } from './utils';
+import type { BrandingConfig } from './BrandingConfig';
+import brandingConfigImport from '../../../../branding/index';
 
 /* eslint-disable theme-colors/no-literal-colors */
+
+const brandingConfig: BrandingConfig = brandingConfigImport;
 
 export class Theme {
   theme: SupersetTheme;
 
   private static readonly defaultTokens = {
     // Brand
-    brandLogoAlt: 'Apache Superset',
-    brandLogoUrl: '/static/assets/images/superset-logo-horiz.png',
+    brandLogoAlt: brandingConfig.appName,
+    brandLogoUrl: brandingConfig.logoPath,
     brandLogoMargin: '18px',
     brandLogoHref: '/',
     brandLogoHeight: '24px',
 
     // Default colors
-    colorPrimary: '#2893B3', // NOTE: previous lighter primary color was #20a7c9
+    colorPrimary: brandingConfig.primaryColor,
     colorLink: '#2893B3',
     colorError: '#e04355',
     colorWarning: '#fcc700',
@@ -233,6 +237,12 @@ export class Theme {
     this.updateProviders = (theme, antdConfig, emotionCache) => {
       setThemeState({ theme, antdConfig, emotionCache });
     };
+
+    console.log(
+      'LOGO URL TYPE:',
+      typeof brandingConfig.logoPath,
+      brandingConfig.logoPath,
+    );
 
     return (
       <EmotionCacheProvider value={themeState.emotionCache}>

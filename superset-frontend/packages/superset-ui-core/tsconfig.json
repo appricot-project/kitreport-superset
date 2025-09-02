@@ -11,14 +11,7 @@
       "@superset-ui/core/*": ["src/*"]
     }
   },
-  "exclude": [
-    "lib",
-    "test"
-  ],
-  "include": [
-    "src/**/*",
-    "spec/**/*",
-    "types/**/*"
-  ],
+  "exclude": ["lib", "test"],
+  "include": ["src/**/*", "spec/**/*", "types/**/*", "../../branding/**/*"],
   "references": []
 }
