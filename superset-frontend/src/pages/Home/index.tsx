@@ -25,10 +25,13 @@ import {
   styled,
   t,
 } from '@superset-ui/core';
+import { useLocation } from 'react-router-dom';
 import rison from 'rison';
 import { Collapse, ListViewCard } from '@superset-ui/core/components';
 import { User } from 'src/types/bootstrapTypes';
 import { reject } from 'lodash';
+import { Switch } from '@superset-ui/core/components/Switch';
+
 import {
   dangerouslyGetItemDoNotUse,
   dangerouslySetItemDoNotUse,
@@ -45,7 +48,6 @@ import {
   loadingCardCount,
   mq,
 } from 'src/views/CRUD/utils';
-import { Switch } from '@superset-ui/core/components/Switch';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { TableTab } from 'src/views/CRUD/types';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -53,7 +55,8 @@ import MaterialLibrary from 'src/features/home/MaterialLibrary';
 import { userHasPermission } from 'src/dashboard/util/permissionUtils';
 import { WelcomePageLastTab } from 'src/features/home/types';
 // import ActivityTable from 'src/features/home/ActivityTable';
-// import ChartTable from 'src/features/home/ChartTable';
+import ChartTable from 'src/features/home/ChartTable';
+import MaterialLibraryList from '../MaterialLibraryList';
 // import SavedQueries from 'src/features/home/SavedQueries';
 // import DashboardTable from 'src/features/home/DashboardTable';
 
@@ -148,6 +151,11 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
 );
 
 function Welcome({ user, addDangerToast }: WelcomeProps) {
+  const location = useLocation();
+  const showMaterialLibrary =
+    new URLSearchParams(location.search).get('view') === 'materials';
+  // http://localhost:9000/superset/welcome/?view=materials
+
   const canReadSavedQueries = userHasPermission(user, 'SavedQuery', 'can_read');
   const userid = user.userId;
   const id = userid!.toString(); // confident that user is not a guest user
@@ -185,7 +193,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     'welcome.main.replacement',
   );
 
-  const [_, otherTabFilters] = useMemo(() => {
+  const [otherTabTitle, otherTabFilters] = useMemo(() => {
     const lastTab = bootstrapData.common?.conf
       .WELCOME_PAGE_LAST_TAB as WelcomePageLastTab;
     const [customTitle, customFilter] = Array.isArray(lastTab)
@@ -318,7 +326,8 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     }
   }, [activityData]);
 
-  // const isRecentActivityLoading = !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
+  const isRecentActivityLoading =
+    !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
 
   const menuData: SubMenuProps = {
     activeChild: 'Home',
@@ -340,6 +349,10 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
         buttonStyle: 'link',
       },
     ];
+  }
+
+  if (showMaterialLibrary) {
+    return <MaterialLibraryList />;
   }
 
   return (
@@ -383,7 +396,8 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                 // {
                 //   key: 'dashboards',
                 //   label: t('Dashboards'),
-                //   children: !dashboardData || isRecentActivityLoading ? (
+                //   children:
+                //     !dashboardData || isRecentActivityLoading ? (
                 //       <LoadingCards cover={checked} />
                 //     ) : (
                 //       <DashboardTable
@@ -396,22 +410,23 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                 //       />
                 //     ),
                 // },
-                // {
-                //   key: 'charts',
-                //   label: t('Charts'),
-                //   children: !chartData || isRecentActivityLoading ? (
-                //       <LoadingCards cover={checked} />
-                //     ) : (
-                //       <ChartTable
-                //         showThumbnails={checked}
-                //         user={user}
-                //         mine={chartData}
-                //         otherTabData={activityData?.[TableTab.Other]}
-                //         otherTabFilters={otherTabFilters}
-                //         otherTabTitle={otherTabTitle}
-                //       />
-                //     ),
-                // },
+                {
+                  key: 'charts',
+                  label: t('Charts'),
+                  children:
+                    !chartData || isRecentActivityLoading ? (
+                      <LoadingCards cover={checked} />
+                    ) : (
+                      <ChartTable
+                        showThumbnails={checked}
+                        user={user}
+                        mine={chartData}
+                        otherTabData={activityData?.[TableTab.Other]}
+                        otherTabFilters={otherTabFilters}
+                        otherTabTitle={otherTabTitle}
+                      />
+                    ),
+                },
                 {
                   key: 'material-library',
                   label: 'Material library',

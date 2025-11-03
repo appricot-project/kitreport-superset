@@ -166,6 +166,12 @@ const UserRegistrations = lazy(
       /* webpackChunkName: "UserRegistrations" */ 'src/pages/UserRegistrations'
     ),
 );
+const MaterialLibraryList: LazyExoticComponent<any> = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "MaterialLibraryList" */ 'src/pages/MaterialLibraryList'
+    ),
+);
 
 type Routes = {
   path: string;
@@ -329,6 +335,10 @@ if (isAdmin) {
     {
       path: '/list_groups/',
       Component: GroupsList,
+    },
+    {
+      path: '/material-library/list/',
+      Component: MaterialLibraryList,
     },
   );
 }
