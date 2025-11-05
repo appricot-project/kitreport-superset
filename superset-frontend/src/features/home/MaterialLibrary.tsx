@@ -10,6 +10,7 @@ import {
   isMaterialTab,
   MaterialTab,
   TAB_MAP,
+  MaterialLibraryItem,
 } from 'src/features/materialLibrary/types';
 import {
   findFolderByCategory,
@@ -119,8 +120,7 @@ function MaterialLibrary() {
 
       {!!folder?.items?.length && (
         <CardGrid>
-          {/* TODO: исправить тип */}
-          {folder.items.map((item: any) => (
+          {folder.items.map((item: MaterialLibraryItem) => (
             <MaterialCard
               key={item.title}
               title={t('Открыть материал')}

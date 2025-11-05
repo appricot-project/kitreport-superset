@@ -18,6 +18,7 @@ import {
   BASKET_MAP,
   MaterialTab,
   TAB_MAP,
+  MaterialLibraryFolder,
 } from 'src/features/materialLibrary/types';
 import {
   extractBasketAndFilenameFromUrl,
@@ -29,6 +30,8 @@ import { deleteFile, uploadFile } from 'src/features/materialLibrary/apiClient';
 
 export const ALLOWED_FILE_TYPES = '.pdf,.doc,.docx,.txt';
 export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_FILE_SIZE = 50 * 1024 * 1024;
+export const MAX_FILE_SIZE_MB = MAX_FILE_SIZE / (1024 * 1024);
 
 const PageContainer = styled.div`
   padding: 24px;
@@ -100,23 +103,38 @@ function MaterialLibraryList({
   const allDocuments = transformManifestToDocuments(data);
   const filteredDocuments = filterDocumentsByCategory(allDocuments, activeTab);
 
-  const handleUpload = async (file: File, uploadCategory?: MaterialTa) => {
+  const handleUpload = async (file: File, uploadCategory?: MaterialTab) => {
     const uploadTab = uploadCategory || activeTab;
     if (!uploadTab || uploadTab === ALL_TAB) {
       addDangerToast(t('Пожалуйста, выберите категорию для загрузки файла'));
       return;
     }
 
+    if (file.size > MAX_FILE_SIZE) {
+      addDangerToast(
+        t(
+          'Размер файла превышает максимально допустимый (%s МБ). Размер вашего файла: %s МБ',
+          MAX_FILE_SIZE_MB,
+          (file.size / (1024 * 1024)).toFixed(2),
+        ),
+      );
+      return;
+    }
+
     setUploading(true);
     try {
-      const basket = BASKET_MAP[activeTab];
+      const basket = BASKET_MAP[uploadTab];
       await uploadFile({
         basket,
         file,
         filename: file.name,
       });
       addSuccessToast(
-        t('Документ "%s" успешно загружен в категорию "%s"', file.name, basket),
+        t(
+          'Документ "%s" успешно загружен в категорию "%s"',
+          file.name,
+          TAB_MAP[uploadTab],
+        ),
       );
       setUploadModalVisible(false);
       setSelectedUploadTab(null);
@@ -170,8 +188,7 @@ function MaterialLibraryList({
       key: 'category',
       filters:
         activeTab === ALL_TAB
-          ? // TODO: исправить тип
-            data?.folders.map((folder: any) => ({
+          ? data?.folders.map((folder: MaterialLibraryFolder) => ({
               text: folder.title,
               value: folder.title,
             }))
@@ -328,7 +345,9 @@ function MaterialLibraryList({
               }
               handleUpload(
                 file,
-                activeTab === ALL_TAB ? selectedUploadTab : undefined,
+                activeTab === ALL_TAB
+                  ? (selectedUploadTab ?? undefined)
+                  : undefined,
               );
               return false;
             }}
@@ -342,7 +361,10 @@ function MaterialLibraryList({
               {t('Нажмите или перетащите файл для загрузки')}
             </p>
             <p className="ant-upload-hint">
-              {t('Поддержка файлов PDF, DOC, DOCX, TXT')}
+              {t(
+                'Поддержка файлов PDF, DOC, DOCX, TXT. Максимальный размер: %s МБ',
+                MAX_FILE_SIZE_MB,
+              )}
             </p>
           </Upload.Dragger>
         </Modal>

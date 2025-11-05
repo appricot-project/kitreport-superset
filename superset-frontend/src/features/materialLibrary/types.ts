@@ -1,15 +1,19 @@
 import { TableTab } from 'src/views/CRUD/types';
 
+export interface MaterialLibraryItem {
+  title: string;
+  size_in_bytes: string;
+  url: string;
+  published_at: string;
+}
+
+export interface MaterialLibraryFolder {
+  title: string;
+  items: MaterialLibraryItem[];
+}
+
 export interface MaterialLibraryData {
-  folders: {
-    title: string;
-    items: {
-      title: string;
-      size_in_bytes: string;
-      url: string;
-      published_at: string;
-    }[];
-  }[];
+  folders: MaterialLibraryFolder[];
 }
 
 export interface MaterialDocument {

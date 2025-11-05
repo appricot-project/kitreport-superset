@@ -1,11 +1,5 @@
-import { SupersetClient } from '@superset-ui/core';
-
-const API_BASE_PATH = 'http://147.45.175.242:8088/api/library';
-
+const API_BASE_PATH = 'https://ss.kitreport.ru/api/library';
 const API_TOKEN = 'fb46769d-d040-4cfc-ab9d-fa71e705e488';
-
-// TODO: добавить ограничение для типов файлов
-// TODO: добавить ограничение по максимальному размеру файла
 
 interface UploadFileParams {
   basket: string;
@@ -24,11 +18,6 @@ interface DeleteFileParams {
   filename: string;
 }
 
-/**
- * Загружает файл в S3 storage
- * @param params - параметры загрузки файла
- * @returns Promise с информацией о загруженном файле
- */
 export async function uploadFile({
   basket,
   file,
@@ -55,28 +44,30 @@ export async function uploadFile({
       body: formData,
     });
 
-    console.log('0000000000 response ===', response);
-
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.detail?.[0]?.msg ||
-          errorData.message ||
-          `Upload failed with status ${response.status}`,
-      );
+      const errorText = await response.text();
+      console.error('Ошибка загрузки файла:', errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(
+          errorData.detail?.[0]?.msg ||
+            errorData.message ||
+            `Ошибка загрузки файла не удалась, статус ${response.status}`,
+        );
+      } catch {
+        throw new Error(
+          `Ошибка загрузки файла не удалась: ${errorText || response.status}`,
+        );
+      }
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Upload file error:', error);
+    console.error('Ошибка загрузки файла:', error);
     throw error;
   }
 }
 
-/**
- * Удаляет файл из S3 storage
- * @param params - параметры удаления файла
- */
 export async function deleteFile({
   basket,
   filename,
@@ -95,15 +86,21 @@ export async function deleteFile({
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.detail?.[0]?.msg ||
-          errorData.message ||
-          `Delete failed with status ${response.status}`,
-      );
+      const errorText = await response.text();
+      console.error('Ошибка удаления файла:', errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(
+          errorData.detail?.[0]?.msg ||
+            errorData.message ||
+            `Удаление не удалось, статус ${response.status}`,
+        );
+      } catch {
+        throw new Error(`Удаление не удалось: ${errorText || response.status}`);
+      }
     }
   } catch (error) {
-    console.error('Delete file error:', error);
+    console.error('Ошибка удаления файла:', error);
     throw error;
   }
 }

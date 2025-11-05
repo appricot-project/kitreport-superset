@@ -20,7 +20,11 @@ export function useMaterialManifest() {
     setIsLoading(true);
     setError(null);
 
-    fetch(MANIFEST_URL)
+    const urlWithTimestamp = `${MANIFEST_URL}?t=${Date.now()}`;
+
+    fetch(urlWithTimestamp, {
+      cache: 'no-store',
+    })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
