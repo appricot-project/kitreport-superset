@@ -25,7 +25,6 @@ import {
   styled,
   t,
 } from '@superset-ui/core';
-import { useLocation } from 'react-router-dom';
 import rison from 'rison';
 import { Collapse, ListViewCard } from '@superset-ui/core/components';
 import { User } from 'src/types/bootstrapTypes';
@@ -56,7 +55,6 @@ import { userHasPermission } from 'src/dashboard/util/permissionUtils';
 import { WelcomePageLastTab } from 'src/features/home/types';
 // import ActivityTable from 'src/features/home/ActivityTable';
 import ChartTable from 'src/features/home/ChartTable';
-import MaterialLibraryList from '../MaterialLibraryList';
 // import SavedQueries from 'src/features/home/SavedQueries';
 // import DashboardTable from 'src/features/home/DashboardTable';
 
@@ -151,11 +149,6 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
 );
 
 function Welcome({ user, addDangerToast }: WelcomeProps) {
-  const location = useLocation();
-  const showMaterialLibrary =
-    new URLSearchParams(location.search).get('view') === 'materials';
-  // http://localhost:9000/superset/welcome/?view=materials
-
   const canReadSavedQueries = userHasPermission(user, 'SavedQuery', 'can_read');
   const userid = user.userId;
   const id = userid!.toString(); // confident that user is not a guest user
@@ -349,10 +342,6 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
         buttonStyle: 'link',
       },
     ];
-  }
-
-  if (showMaterialLibrary) {
-    return <MaterialLibraryList />;
   }
 
   return (
