@@ -182,7 +182,7 @@ class ChartRenderer extends Component {
           this.props.formData.subcategories ||
         nextProps.cacheBusterProp !== this.props.cacheBusterProp ||
         nextProps.emitCrossFilters !== this.props.emitCrossFilters ||
-        hasMatrixifyChanges()
+        nextProps.postTransformProps !== this.props.postTransformProps
       );
     }
     return false;
