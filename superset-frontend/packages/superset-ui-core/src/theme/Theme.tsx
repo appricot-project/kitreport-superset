@@ -30,12 +30,6 @@ import '@fontsource/inter/400.css';
 import '@fontsource/inter/500.css';
 /* eslint-disable import/extensions */
 import '@fontsource/inter/600.css';
-/* eslint-disable import/extensions */
-import '@fontsource/fira-code/400.css';
-/* eslint-disable import/extensions */
-import '@fontsource/fira-code/500.css';
-/* eslint-disable import/extensions */
-import '@fontsource/fira-code/600.css';
 
 import {
   ThemeProvider,
@@ -83,7 +77,7 @@ export class Theme {
 
     // Forcing some default tokens
     fontFamily: `'Inter', Helvetica, Arial`,
-    fontFamilyCode: `'Fira Code', 'Courier New', monospace`,
+    fontFamilyCode: `'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'Courier New', monospace`,
 
     // Extra tokens
     transitionTiming: 0.3,

@@ -306,8 +306,6 @@ const DatasourceModal: FunctionComponent<DatasourceModalProps> = ({
       okText: t('OK'),
       cancelText: t('Cancel'),
     });
-    setConfirmModal(modalInstance);
-    dialog.current = modalInstance;
   };
 
   return (
