@@ -25,7 +25,6 @@ import {
   getXAxisLabel,
   Metric,
   getValueFormatter,
-  supersetTheme,
   t,
   tooltipHtml,
 } from '@superset-ui/core';
@@ -81,6 +80,7 @@ export default function transformProps(
     rawFormData,
     hooks,
     inContextMenu,
+    theme,
     datasource: { currencyFormats = {}, columnFormats = {} },
   } = chartProps;
   const {
@@ -281,7 +281,7 @@ export default function transformProps(
                 },
                 {
                   offset: 1,
-                  color: supersetTheme.colorBgContainer,
+                  color: theme.colorBgContainer,
                 },
               ]),
             },
