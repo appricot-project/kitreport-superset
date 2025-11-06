@@ -1,7 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { t, styled } from '@superset-ui/core';
 import { EmptyState } from '@superset-ui/core/components';
-import { Button, Modal, Upload, Table, Space, Popconfirm, Select } from 'antd';
+import {
+  Button,
+  Modal,
+  Upload,
+  Table,
+  Space,
+  Popconfirm,
+  Select,
+  Tooltip,
+} from 'antd';
 import {
   UploadOutlined,
   DeleteOutlined,
@@ -37,6 +46,14 @@ const PageContainer = styled.div`
   padding: 24px;
   background: ${({ theme }) => theme.colorBgLayout};
   min-height: calc(100vh - 64px);
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 const ContentHeader = styled.div`
@@ -44,11 +61,133 @@ const ContentHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 18px;
+    }
+  }
 `;
 
 const NoPaddingButton = styled(Button)`
   padding: 0 !important;
   height: auto;
+  min-height: 24px;
+  font-size: 13px;
+
+  @media (max-width: 768px) {
+    min-height: 44px;
+    font-size: 14px;
+  }
+`;
+
+const ActionsWrapper = styled(Space)`
+  @media (max-width: 768px) {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+`;
+
+const ResponsiveModal = styled(Modal)`
+  @media (max-width: 768px) {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px auto;
+
+    .ant-modal-body {
+      padding: 16px;
+    }
+
+    .ant-select-selector {
+      height: 44px !important;
+      line-height: 44px !important;
+    }
+
+    .ant-select-selection-item {
+      line-height: 44px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto;
+
+    .ant-modal-body {
+      padding: 12px;
+    }
+  }
+`;
+
+const TableWrapper = styled.div`
+  @media (max-width: 768px) {
+    .ant-table-pagination {
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center !important;
+
+      .ant-pagination-total-text {
+        flex-basis: 100%;
+        text-align: center;
+        order: -1;
+      }
+    }
+
+    .ant-table-thead > tr > th {
+      padding: 12px 8px;
+      font-size: 13px;
+    }
+
+    .ant-table-tbody > tr > td {
+      padding: 12px 8px;
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .ant-table-thead > tr > th {
+      padding: 10px 6px;
+      font-size: 12px;
+    }
+
+    .ant-table-tbody > tr > td {
+      padding: 10px 6px;
+      font-size: 12px;
+    }
+
+    .ant-pagination-options {
+      display: none;
+    }
+  }
+
+  .ant-table-thead > tr > th {
+    word-break: keep-all;
+    white-space: normal;
+  }
+
+  .ant-table-cell {
+    > span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 `;
 
 interface Document {
@@ -74,8 +213,18 @@ function MaterialLibraryList({
   const [activeTab, setActiveTab] = useState<MaterialTab>(ALL_TAB);
   const [selectedUploadTab, setSelectedUploadTab] =
     useState<MaterialTab | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const { data, isLoading, refetch } = useMaterialManifest();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const menuTabs = [
     {
@@ -181,6 +330,15 @@ function MaterialLibraryList({
       dataIndex: 'title',
       key: 'title',
       sorter: (a, b) => a.title.localeCompare(b.title),
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (title: string) => (
+        <Tooltip title={title} placement="topLeft">
+          <span>{title}</span>
+        </Tooltip>
+      ),
+      width: '40%',
     },
     {
       title: t('Категория'),
@@ -194,6 +352,16 @@ function MaterialLibraryList({
             }))
           : undefined,
       onFilter: (value, record) => record.category === value,
+      responsive: ['md'] as Array<'xxl' | 'xl' | 'lg' | 'md' | 'sm' | 'xs'>,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (category: string) => (
+        <Tooltip title={category}>
+          <span>{category}</span>
+        </Tooltip>
+      ),
+      width: '18%',
     },
     {
       title: t('Размер'),
@@ -201,20 +369,44 @@ function MaterialLibraryList({
       key: 'size',
       render: (size: number) => formatSize(size),
       sorter: (a, b) => a.size_in_bytes - b.size_in_bytes,
+      responsive: ['lg'] as Array<'xxl' | 'xl' | 'lg' | 'md' | 'sm' | 'xs'>,
+      width: 100,
+      align: 'right' as const,
     },
     {
       title: t('Дата публикации'),
       dataIndex: 'published_at',
       key: 'published_at',
-      render: (date: string) => new Date(date).toLocaleDateString(),
+      render: (date: string) => {
+        const dateObj = new Date(date);
+        const formatted = dateObj.toLocaleDateString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+        const fullDate = dateObj.toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        return (
+          <Tooltip title={fullDate}>
+            <span>{formatted}</span>
+          </Tooltip>
+        );
+      },
       sorter: (a, b) =>
         new Date(a.published_at).getTime() - new Date(b.published_at).getTime(),
+      responsive: ['sm'] as Array<'xxl' | 'xl' | 'lg' | 'md' | 'sm' | 'xs'>,
+      width: 135,
     },
     {
       title: t('Actions'),
       key: 'actions',
       render: (_, record) => (
-        <Space direction="vertical" size={4}>
+        <ActionsWrapper size={8}>
           <NoPaddingButton
             href={record.url}
             rel="noopener noreferrer"
@@ -247,7 +439,7 @@ function MaterialLibraryList({
               {t('Удалить')}
             </NoPaddingButton>
           </Popconfirm>
-        </Space>
+        </ActionsWrapper>
       ),
     },
   ];
@@ -288,22 +480,27 @@ function MaterialLibraryList({
         )}
 
         {!!filteredDocuments.length && (
-          <Table
-            columns={columns}
-            dataSource={filteredDocuments}
-            loading={isLoading}
-            pagination={{
-              pageSize: DEFAULT_PAGE_SIZE,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                t('%s-%s из %s материалов', range[0], range[1], total),
-            }}
-            rowKey="id"
-          />
+          <TableWrapper>
+            <Table
+              columns={columns}
+              dataSource={filteredDocuments}
+              loading={isLoading}
+              scroll={{ x: 800 }}
+              pagination={{
+                pageSize: DEFAULT_PAGE_SIZE,
+                showSizeChanger: !isMobile,
+                showQuickJumper: !isMobile,
+                showTotal: (total, range) =>
+                  t('%s-%s из %s материалов', range[0], range[1], total),
+                responsive: true,
+                simple: isMobile,
+              }}
+              rowKey="id"
+            />
+          </TableWrapper>
         )}
 
-        <Modal
+        <ResponsiveModal
           footer={null}
           open={uploadModalVisible}
           title={t('Загрузить документ')}
@@ -367,7 +564,7 @@ function MaterialLibraryList({
               )}
             </p>
           </Upload.Dragger>
-        </Modal>
+        </ResponsiveModal>
       </PageContainer>
     </>
   );
