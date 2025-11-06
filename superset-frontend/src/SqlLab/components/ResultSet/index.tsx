@@ -87,6 +87,7 @@ import {
 } from 'src/logger/LogUtils';
 import { Icons } from '@superset-ui/core/components/Icons';
 import { findPermission } from 'src/utils/findPermission';
+import { ensureAppRoot } from 'src/utils/pathUtils';
 import ExploreCtasResultsButton from '../ExploreCtasResultsButton';
 import ExploreResultsButton from '../ExploreResultsButton';
 import HighlightedSql from '../HighlightedSql';
@@ -148,6 +149,7 @@ const ReturnedRows = styled.div`
 const ResultSetControls = styled.div`
   display: flex;
   justify-content: space-between;
+  padding-left: ${({ theme }) => theme.sizeUnit * 4}px;
 `;
 
 const ResultSetButtons = styled.div`
@@ -194,6 +196,7 @@ const ResultSet = ({
         'dbId',
         'tab',
         'sql',
+        'executedSql',
         'sqlEditorId',
         'templateParams',
         'schema',
@@ -297,7 +300,7 @@ const ResultSet = ({
   };
 
   const getExportCsvUrl = (clientId: string) =>
-    `/api/v1/sqllab/export/${clientId}/`;
+    ensureAppRoot(`/api/v1/sqllab/export/${clientId}/`);
 
   const renderControls = () => {
     if (search || visualize || csv) {
@@ -553,6 +556,7 @@ const ResultSet = ({
     sql = (
       <HighlightedSql
         sql={query.sql}
+        rawSql={query.executedSql}
         {...(showSqlInline && { maxLines: 1, maxWidth: 60 })}
       />
     );
@@ -659,6 +663,7 @@ const ResultSet = ({
                 css={css`
                   display: flex;
                   justify-content: space-between;
+                  padding-left: ${theme.sizeUnit * 4}px;
                   align-items: center;
                   gap: ${GAP}px;
                 `}
@@ -694,6 +699,7 @@ const ResultSet = ({
           <div
             css={css`
               flex: 1 1 auto;
+              padding-left: ${theme.sizeUnit * 4}px;
             `}
           >
             <AutoSizer disableWidth>

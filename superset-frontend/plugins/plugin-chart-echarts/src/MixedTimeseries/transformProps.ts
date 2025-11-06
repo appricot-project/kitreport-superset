@@ -129,6 +129,7 @@ export default function transformProps(
     theme,
     inContextMenu,
     emitCrossFilters,
+    legendState,
   } = chartProps;
 
   let focusedSeries: string | null = null;
@@ -157,6 +158,7 @@ export default function transformProps(
     timeShiftColor,
     contributionMode,
     legendOrientation,
+    legendMargin,
     legendType,
     logAxis,
     logAxisSecondary,
@@ -243,6 +245,10 @@ export default function transformProps(
   const MetricDisplayNameA = getMetricDisplayName(metrics[0], verboseMap);
   const MetricDisplayNameB = getMetricDisplayName(metricsB[0], verboseMap);
 
+  const dataTypes = getColtypesMapping(queriesData[0]);
+  const xAxisDataType = dataTypes?.[xAxisLabel] ?? dataTypes?.[xAxisOrig];
+  const xAxisType = getAxisType(stack, xAxisForceCategorical, xAxisDataType);
+
   const [rawSeriesA, sortedTotalValuesA] = extractSeries(rebasedDataA, {
     fillNeighborValue: stack ? 0 : undefined,
     xAxis: xAxisLabel,
@@ -250,6 +256,7 @@ export default function transformProps(
     sortSeriesAscending,
     stack,
     totalStackedValues,
+    xAxisType,
   });
   const rebasedDataB = rebaseForecastDatum(data2, verboseMap);
   const {
@@ -267,11 +274,8 @@ export default function transformProps(
     sortSeriesAscending: sortSeriesAscendingB,
     stack: Boolean(stackB),
     totalStackedValues: totalStackedValuesB,
+    xAxisType,
   });
-
-  const dataTypes = getColtypesMapping(queriesData[0]);
-  const xAxisDataType = dataTypes?.[xAxisLabel] ?? dataTypes?.[xAxisOrig];
-  const xAxisType = getAxisType(stack, xAxisForceCategorical, xAxisDataType);
   const series: SeriesOption[] = [];
   const formatter = contributionMode
     ? getNumberFormatter(',.0%')
@@ -316,12 +320,6 @@ export default function transformProps(
       primarySeries.add(seriesOption.id as string);
     }
   };
-  rawSeriesA.forEach(seriesOption =>
-    mapSeriesIdToAxis(seriesOption, yAxisIndex),
-  );
-  rawSeriesB.forEach(seriesOption =>
-    mapSeriesIdToAxis(seriesOption, yAxisIndexB),
-  );
   const showValueIndexesA = extractShowValueIndexes(rawSeriesA, {
     stack,
     onlyTotal,
@@ -421,6 +419,7 @@ export default function transformProps(
       {
         ...entry,
         id: `${displayName || ''}`,
+        name: `${displayName || ''}`,
       },
       colorScale,
       colorScaleKey,
@@ -450,9 +449,14 @@ export default function transformProps(
         showValueIndexes: showValueIndexesA,
         thresholdValues,
         timeShiftColor,
+        theme,
       },
     );
-    if (transformedSeries) series.push(transformedSeries);
+
+    if (transformedSeries) {
+      series.push(transformedSeries);
+      mapSeriesIdToAxis(transformedSeries, yAxisIndex);
+    }
   });
 
   rawSeriesB.forEach(entry => {
@@ -486,6 +490,7 @@ export default function transformProps(
       {
         ...entry,
         id: `${displayName || ''}`,
+        name: `${displayName || ''}`,
       },
 
       colorScale,
@@ -516,9 +521,14 @@ export default function transformProps(
         showValueIndexes: showValueIndexesB,
         thresholdValues: thresholdValuesB,
         timeShiftColor,
+        theme,
       },
     );
-    if (transformedSeries) series.push(transformedSeries);
+
+    if (transformedSeries) {
+      series.push(transformedSeries);
+      mapSeriesIdToAxis(transformedSeries, yAxisIndexB);
+    }
   });
 
   // default to 0-100% range when doing row-level contribution chart
@@ -546,7 +556,7 @@ export default function transformProps(
     legendOrientation,
     addYAxisTitleOffset,
     zoomable,
-    null,
+    legendMargin,
     addXAxisTitleOffset,
     yAxisTitlePosition,
     convertInteger(yAxisTitleMargin),
@@ -709,6 +719,8 @@ export default function transformProps(
         showLegend,
         theme,
         zoomable,
+        legendState,
+        chartPadding,
       ),
       // @ts-ignore
       data: series

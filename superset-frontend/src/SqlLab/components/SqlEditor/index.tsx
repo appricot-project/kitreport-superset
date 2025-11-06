@@ -49,7 +49,7 @@ import type {
   CursorPosition,
 } from 'src/SqlLab/types';
 import type { DatabaseObject } from 'src/features/databases/types';
-import { debounce, isEmpty, noop } from 'lodash';
+import { debounce, isEmpty } from 'lodash';
 import Mousetrap from 'mousetrap';
 import {
   Alert,
@@ -164,8 +164,15 @@ const StyledToolbar = styled.div`
   }
 `;
 
-const StyledSidebar = styled.div`
-  padding: ${({ theme }) => theme.sizeUnit * 2.5}px;
+const StyledSidebar = styled.div<{ width: number; hide: boolean | undefined }>`
+  flex: 0 0 ${({ width }) => width}px;
+  width: ${({ width }) => width}px;
+  padding: ${({ theme, hide }) => (hide ? 0 : theme.sizeUnit * 2.5)}px;
+  border-right: 1px solid
+    ${({ theme, hide }) => (hide ? 'transparent' : theme.colorBorder)};
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 `;
 
 const StyledSqlEditor = styled.div`
@@ -180,17 +187,9 @@ const StyledSqlEditor = styled.div`
 
     .queryPane {
       padding: ${theme.sizeUnit * 2}px;
-      + .ant-splitter-bar .ant-splitter-bar-dragger {
-        &::before {
-          background: transparent;
-        }
-        &::after {
-          height: ${SQL_EDITOR_GUTTER_HEIGHT}px;
-          background: transparent;
-          border-top: 1px solid ${theme.colorBorder};
-          border-bottom: 1px solid ${theme.colorBorder};
-        }
-      }
+      padding-left: 0px;
+      overflow-y: auto;
+      overflow-x: scroll;
     }
 
     .north-pane {
@@ -283,8 +282,6 @@ const SqlEditor: FC<Props> = ({
   const sqlEditorRef = useRef<HTMLDivElement>(null);
 
   const SqlFormExtension = extensionsRegistry.get('sqleditor.extension.form');
-
-  const isTempId = (value: unknown): boolean => Number.isNaN(Number(value));
 
   const startQuery = useCallback(
     (ctasArg = false, ctas_method = CtasEnum.Table) => {
@@ -907,15 +904,13 @@ const SqlEditor: FC<Props> = ({
     />
   );
 
-  const queryPane = () => (
-    <Splitter
-      layout="vertical"
-      onResizeStart={onResizeStart}
-      onResizeEnd={onResizeEnd}
-    >
-      <Splitter.Panel
-        min={queryEditor.isDataset ? 400 : 200}
-        defaultSize={`${northPercent}%`}
+  const queryPane = () => {
+    const height = getSqlEditorHeight();
+    const { aceEditorHeight, southPaneHeight } =
+      getAceEditorAndSouthPaneHeights(height, northPercent, southPercent);
+    return (
+      <Split
+        expandToMin
         className="queryPane"
       >
         <div className="north-pane">
@@ -929,25 +924,17 @@ const SqlEditor: FC<Props> = ({
             />
           )}
           {queryEditor.isDataset && renderDatasetWarning()}
-          <div className="sql-container">
-            <AutoSizer disableWidth>
-              {({ height }) =>
-                isActive && (
-                  <AceEditorWrapper
-                    autocomplete={
-                      autocompleteEnabled && !isTempId(queryEditor.id)
-                    }
-                    onBlur={onSqlChanged}
-                    onChange={onSqlChanged}
-                    queryEditorId={queryEditor.id}
-                    onCursorPositionChange={handleCursorPositionChange}
-                    height={`${height}px`}
-                    hotkeys={hotkeys}
-                  />
-                )
-              }
-            </AutoSizer>
-          </div>
+          {isActive && (
+            <AceEditorWrapper
+              autocomplete={autocompleteEnabled}
+              onBlur={onSqlChanged}
+              onChange={onSqlChanged}
+              queryEditorId={queryEditor.id}
+              onCursorPositionChange={handleCursorPositionChange}
+              height={`${aceEditorHeight}px`}
+              hotkeys={hotkeys}
+            />
+          )}
           {renderEditorBottomBar(showEmptyState)}
         </div>
       </Splitter.Panel>
