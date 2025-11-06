@@ -6,5 +6,6 @@ declare module '@deck.gl/core' {
 
 declare module '@deck.gl/*' {
   const content: any;
+
   export = content;
 }

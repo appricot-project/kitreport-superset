@@ -19,6 +19,7 @@ switch (brand) {
     break;
   case 'kod-dostupa':
     brandingConfig = kodDostupaBranding;
+    break;
   case 'tri-kita':
     brandingConfig = triKitaBranding;
     break;

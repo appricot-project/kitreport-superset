@@ -29,6 +29,8 @@ import rison from 'rison';
 import { Collapse, ListViewCard } from '@superset-ui/core/components';
 import { User } from 'src/types/bootstrapTypes';
 import { reject } from 'lodash';
+import { Switch } from '@superset-ui/core/components/Switch';
+
 import {
   dangerouslyGetItemDoNotUse,
   dangerouslySetItemDoNotUse,
@@ -45,7 +47,6 @@ import {
   loadingCardCount,
   mq,
 } from 'src/views/CRUD/utils';
-import { Switch } from '@superset-ui/core/components/Switch';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { TableTab } from 'src/views/CRUD/types';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -53,7 +54,7 @@ import MaterialLibrary from 'src/features/home/MaterialLibrary';
 import { userHasPermission } from 'src/dashboard/util/permissionUtils';
 import { WelcomePageLastTab } from 'src/features/home/types';
 // import ActivityTable from 'src/features/home/ActivityTable';
-// import ChartTable from 'src/features/home/ChartTable';
+import ChartTable from 'src/features/home/ChartTable';
 // import SavedQueries from 'src/features/home/SavedQueries';
 // import DashboardTable from 'src/features/home/DashboardTable';
 
@@ -185,7 +186,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     'welcome.main.replacement',
   );
 
-  const [_, otherTabFilters] = useMemo(() => {
+  const [otherTabTitle, otherTabFilters] = useMemo(() => {
     const lastTab = bootstrapData.common?.conf
       .WELCOME_PAGE_LAST_TAB as WelcomePageLastTab;
     const [customTitle, customFilter] = Array.isArray(lastTab)
@@ -318,7 +319,8 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     }
   }, [activityData]);
 
-  // const isRecentActivityLoading = !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
+  const isRecentActivityLoading =
+    !activityData?.[TableTab.Other] && !activityData?.[TableTab.Viewed];
 
   const menuData: SubMenuProps = {
     activeChild: 'Home',
@@ -383,7 +385,8 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                 // {
                 //   key: 'dashboards',
                 //   label: t('Dashboards'),
-                //   children: !dashboardData || isRecentActivityLoading ? (
+                //   children:
+                //     !dashboardData || isRecentActivityLoading ? (
                 //       <LoadingCards cover={checked} />
                 //     ) : (
                 //       <DashboardTable
@@ -396,22 +399,23 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                 //       />
                 //     ),
                 // },
-                // {
-                //   key: 'charts',
-                //   label: t('Charts'),
-                //   children: !chartData || isRecentActivityLoading ? (
-                //       <LoadingCards cover={checked} />
-                //     ) : (
-                //       <ChartTable
-                //         showThumbnails={checked}
-                //         user={user}
-                //         mine={chartData}
-                //         otherTabData={activityData?.[TableTab.Other]}
-                //         otherTabFilters={otherTabFilters}
-                //         otherTabTitle={otherTabTitle}
-                //       />
-                //     ),
-                // },
+                {
+                  key: 'charts',
+                  label: t('Charts'),
+                  children:
+                    !chartData || isRecentActivityLoading ? (
+                      <LoadingCards cover={checked} />
+                    ) : (
+                      <ChartTable
+                        showThumbnails={checked}
+                        user={user}
+                        mine={chartData}
+                        otherTabData={activityData?.[TableTab.Other]}
+                        otherTabFilters={otherTabFilters}
+                        otherTabTitle={otherTabTitle}
+                      />
+                    ),
+                },
                 {
                   key: 'material-library',
                   label: 'Material library',

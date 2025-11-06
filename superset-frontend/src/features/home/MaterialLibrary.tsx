@@ -1,10 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { t, styled } from '@superset-ui/core';
 import { EmptyState, Loading } from '@superset-ui/core/components';
 
 import { TableTab } from 'src/views/CRUD/types';
 import withToasts from 'src/components/MessageToasts/withToasts';
+import { useMaterialManifest } from 'src/features/materialLibrary/useMaterialManifest';
+import {
+  isMaterialTab,
+  MaterialTab,
+  TAB_MAP,
+  MaterialLibraryItem,
+} from 'src/features/materialLibrary/types';
+import {
+  findFolderByCategory,
+  formatDateToLocale,
+  formatSize,
+} from 'src/features/materialLibrary/utils';
 import SubMenu from './SubMenu';
+
+const TopBar = styled.div`
+  // display: flex;
+  // align-items: flex-start;
+  // justify-content: space-between;
+  // gap: 4px;
+`;
 
 const CardGrid = styled.div`
   display: flex;
@@ -40,95 +60,12 @@ const MaterialCard = styled.a`
   }
 `;
 
-const TopBar = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 4px;
-`;
-
-const formatSize = (bytes: string) => {
-  const num = Number(bytes);
-  if (num < 1024) return `${num} B`;
-  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
-
-  return `${(num / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-function formatDateToLocale(date: string) {
-  return new Date(date).toLocaleDateString();
-}
-
-const TAB_MAP: {
-  [key in
-    | TableTab.Strategic
-    | TableTab.Operating
-    | TableTab.CompanyLevel]: string;
-} = {
-  [TableTab.Strategic]: 'Стратегический уровень',
-  [TableTab.Operating]: 'Операционный уровень',
-  [TableTab.CompanyLevel]: 'Уровень компании',
-};
-
-type MaterialTab =
-  | TableTab.Strategic
-  | TableTab.Operating
-  | TableTab.CompanyLevel;
-
-const isMaterialTab = (tab: TableTab): tab is MaterialTab => {
-  return (
-    tab === TableTab.Strategic ||
-    tab === TableTab.Operating ||
-    tab === TableTab.CompanyLevel
-  );
-};
-
-export interface MaterialLibraryData {
-  folders: {
-    title: string;
-    items: {
-      title: string;
-      size_in_bytes: string;
-      url: string;
-      published_at: string;
-    }[];
-  }[];
-}
-
-const URL =
-  'https://s3.twcstorage.ru/85c86d18-kitreport-document-library/manifest.json';
-
-function useMaterialManifest() {
-  const [data, setData] = useState<MaterialLibraryData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-
-    fetch(URL)
-      .then(response => response.json())
-      .then(json => {
-        if (isMounted) setData(json);
-      })
-      .catch(() => {
-        if (isMounted) setData(null);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  return { data, isLoading };
-}
-
 function MaterialLibrary() {
+  const history = useHistory();
   const [activeTab, setActiveTab] = useState<MaterialTab>(TableTab.Strategic);
   const { data, isLoading } = useMaterialManifest();
+
+  console.log('data ===', data);
 
   const menuTabs = [
     {
@@ -148,10 +85,9 @@ function MaterialLibrary() {
     },
   ];
 
-  const folder =
-    isMaterialTab(activeTab) && data
-      ? data.folders.find(folder => folder.title === TAB_MAP[activeTab])
-      : undefined;
+  const folder = isMaterialTab(activeTab)
+    ? findFolderByCategory(data, activeTab)
+    : undefined;
 
   return (
     <>
@@ -160,18 +96,31 @@ function MaterialLibrary() {
           activeChild={activeTab}
           backgroundColor="transparent"
           tabs={menuTabs}
+          // TODO: показывать кнопку только админу
+          buttons={[
+            {
+              name: t('Посмотреть все'),
+              buttonStyle: 'link',
+              onClick: () => {
+                history.push('/material-library/list');
+              },
+            },
+          ]}
         />
       </TopBar>
 
       {isLoading && <Loading />}
 
       {!folder?.items?.length && !isLoading && (
-        <EmptyState title={t('Нет доступных материалов')} />
+        <EmptyState
+          title={t('Нет доступных материалов')}
+          description={t('В данный момент нет информации для отображения.')}
+        />
       )}
 
       {!!folder?.items?.length && (
         <CardGrid>
-          {folder.items.map(item => (
+          {folder.items.map((item: MaterialLibraryItem) => (
             <MaterialCard
               key={item.title}
               title={t('Открыть материал')}
