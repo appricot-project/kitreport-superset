@@ -1,0 +1,53 @@
+.sortable-helper {
+  background: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(23, 101, 216, 0.3) !important;
+  border-radius: 10px !important;
+  border: 2px solid #1765d8 !important;
+  padding: 0 16px !important;
+  opacity: 1 !important;
+  z-index: 9999;
+
+  transform: scale(1.03);
+  transition: none !important;
+  cursor: grabbing !important;
+}
+
+.sortable-helper .ant-list-item {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sortable-helper .ant-list-item span {
+  font-weight: 700 !important;
+  color: #1765d8 !important;
+
+  user-select: none !important;
+}
+
+.sortable-helper div[class*='FileNumber'] {
+  background: #1765d8 !important;
+  box-shadow: 0 2px 8px rgba(23, 101, 216, 0.3) !important;
+}
+
+body.dragging .ant-list-item:not(.sortable-helper) {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+body.dragging .ant-list-item:not(.sortable-helper):hover {
+  background: #fafbfc !important;
+  box-shadow: 0 1px 4px #0001 !important;
+}
+
+body.dragging .ant-list-item:not(.sortable-helper) span {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+.sortable-helper + li {
+  margin-top: 16px !important;
+
+  transition: margin 0.2s ease;
+}

@@ -166,6 +166,12 @@ const UserRegistrations = lazy(
       /* webpackChunkName: "UserRegistrations" */ 'src/pages/UserRegistrations'
     ),
 );
+const PdfReportBuilder: LazyExoticComponent<any> = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "PdfReportBuilder" */ 'src/pages/PdfReportBuilder'
+    ),
+);
 
 type Routes = {
   path: string;
@@ -297,6 +303,10 @@ export const routes: Routes = [
   {
     path: '/registrations/',
     Component: UserRegistrations,
+  },
+  {
+    path: '/superset/pdf/',
+    Component: PdfReportBuilder,
   },
 ];
 
