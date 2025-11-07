@@ -54,7 +54,7 @@ import MaterialLibrary from 'src/features/home/MaterialLibrary';
 import { userHasPermission } from 'src/dashboard/util/permissionUtils';
 import { WelcomePageLastTab } from 'src/features/home/types';
 // import ActivityTable from 'src/features/home/ActivityTable';
-import ChartTable from 'src/features/home/ChartTable';
+// import ChartTable from 'src/features/home/ChartTable';
 // import SavedQueries from 'src/features/home/SavedQueries';
 // import DashboardTable from 'src/features/home/DashboardTable';
 
@@ -186,7 +186,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     'welcome.main.replacement',
   );
 
-  const [otherTabTitle, otherTabFilters] = useMemo(() => {
+  const [_, otherTabFilters] = useMemo(() => {
     const lastTab = bootstrapData.common?.conf
       .WELCOME_PAGE_LAST_TAB as WelcomePageLastTab;
     const [customTitle, customFilter] = Array.isArray(lastTab)
@@ -399,23 +399,23 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                 //       />
                 //     ),
                 // },
-                {
-                  key: 'charts',
-                  label: t('Charts'),
-                  children:
-                    !chartData || isRecentActivityLoading ? (
-                      <LoadingCards cover={checked} />
-                    ) : (
-                      <ChartTable
-                        showThumbnails={checked}
-                        user={user}
-                        mine={chartData}
-                        otherTabData={activityData?.[TableTab.Other]}
-                        otherTabFilters={otherTabFilters}
-                        otherTabTitle={otherTabTitle}
-                      />
-                    ),
-                },
+                // {
+                //   key: 'charts',
+                //   label: t('Charts'),
+                //   children:
+                //     !chartData || isRecentActivityLoading ? (
+                //       <LoadingCards cover={checked} />
+                //     ) : (
+                //       <ChartTable
+                //         showThumbnails={checked}
+                //         user={user}
+                //         mine={chartData}
+                //         otherTabData={activityData?.[TableTab.Other]}
+                //         otherTabFilters={otherTabFilters}
+                //         otherTabTitle={otherTabTitle}
+                //       />
+                //     ),
+                // },
                 {
                   key: 'material-library',
                   label: 'Material library',
