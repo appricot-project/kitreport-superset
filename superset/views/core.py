@@ -949,3 +949,34 @@ class Superset(BaseSupersetView):
     @deprecated(new_target="/sqllab/history")
     def sqllab_history(self) -> FlaskResponse:
         return redirect(url_for("SqllabView.history"))
+    
+
+    @expose("/pdf/")
+    def pdf(self) -> FlaskResponse:
+        payload = {
+            "user": bootstrap_user_data(g.user, include_perms=True),
+            "common": common_bootstrap_payload(),
+        }
+
+        return self.render_template(
+            "superset/spa.html",
+            entry="spa",
+            bootstrap_data=json.dumps(
+                payload, default=json.pessimistic_json_iso_dttm_ser
+            ),
+        )
+
+    @expose("/library/")
+    def library(self) -> FlaskResponse:
+        payload = {
+            "user": bootstrap_user_data(g.user, include_perms=True),
+            "common": common_bootstrap_payload(),
+        }
+
+        return self.render_template(
+            "superset/spa.html",
+            entry="spa",
+            bootstrap_data=json.dumps(
+                payload, default=json.pessimistic_json_iso_dttm_ser
+            ),
+        )
