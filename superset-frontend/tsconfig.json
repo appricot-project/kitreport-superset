@@ -18,9 +18,10 @@
       "@superset-ui/preset-chart-*": ["./plugins/preset-chart-*/src"],
       "@superset-ui/switchboard": ["./packages/superset-ui-switchboard/src"]
     },
-    "typeRoots": ["src/types", "node_modules/@types"]
+    "typeRoots": ["src/types", "node_modules/@types"],
+    "skipLibCheck": true
   },
-  "exclude": ["./packages/generator-superset/test/**/*"],
+  "exclude": ["./packages/generator-superset/test/**/*", "node_modules"],
   "include": [
     "./src/**/*",
     "./spec/**/*",

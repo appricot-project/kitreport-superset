@@ -27,11 +27,9 @@ import {
   ChangeEvent,
   FC,
 } from 'react';
-
 import type AceEditor from 'react-ace';
 import useEffectEvent from 'src/hooks/useEffectEvent';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import {
   css,
   FeatureFlag,
@@ -49,7 +47,7 @@ import type {
   CursorPosition,
 } from 'src/SqlLab/types';
 import type { DatabaseObject } from 'src/features/databases/types';
-import { debounce, isEmpty } from 'lodash';
+import { debounce, isEmpty, noop } from 'lodash';
 import Mousetrap from 'mousetrap';
 import {
   Alert,
@@ -91,7 +89,6 @@ import {
 } from 'src/SqlLab/actions/sqlLab';
 import {
   STATE_TYPE_MAP,
-  SQL_EDITOR_GUTTER_HEIGHT,
   SQL_EDITOR_LEFTBAR_WIDTH,
   INITIAL_NORTH_PERCENT,
   SET_QUERY_EDITOR_SQL_DEBOUNCE_MS,
@@ -905,15 +902,16 @@ const SqlEditor: FC<Props> = ({
   );
 
   const queryPane = () => {
-    const height = getSqlEditorHeight();
-    const { aceEditorHeight, southPaneHeight } =
-      getAceEditorAndSouthPaneHeights(height, northPercent, southPercent);
+    const height = sqlEditorRef.current?.clientHeight || 600;
+    const aceEditorHeight = Math.floor((height * northPercent) / 100);
+
     return (
-      <Split
-        expandToMin
+      <Splitter
+        onResizeStart={onResizeStart}
+        onResizeEnd={onResizeEnd}
         className="queryPane"
       >
-        <div className="north-pane">
+        <Splitter.Panel className="north-pane">
           {SqlFormExtension && (
             <SqlFormExtension
               queryEditorId={queryEditor.id}
@@ -936,18 +934,18 @@ const SqlEditor: FC<Props> = ({
             />
           )}
           {renderEditorBottomBar(showEmptyState)}
-        </div>
-      </Splitter.Panel>
-      <Splitter.Panel className="queryPane">
-        <SouthPane
-          queryEditorId={queryEditor.id}
-          latestQueryId={latestQuery?.id}
-          displayLimit={displayLimit}
-          defaultQueryLimit={defaultQueryLimit}
-        />
-      </Splitter.Panel>
-    </Splitter>
-  );
+        </Splitter.Panel>
+        <Splitter.Panel className="queryPane">
+          <SouthPane
+            queryEditorId={queryEditor.id}
+            latestQueryId={latestQuery?.id}
+            displayLimit={displayLimit}
+            defaultQueryLimit={defaultQueryLimit}
+          />
+        </Splitter.Panel>
+      </Splitter>
+    );
+  };
 
   const createViewModalTitle =
     createAs === CtasEnum.View ? 'CREATE VIEW AS' : 'CREATE TABLE AS';
@@ -987,7 +985,7 @@ const SqlEditor: FC<Props> = ({
           size={hideLeftBar ? 0 : width}
           min={SQL_EDITOR_LEFTBAR_WIDTH}
         >
-          <StyledSidebar>
+          <StyledSidebar width={width} hide={hideLeftBar}>
             <SqlEditorLeftBar
               database={database}
               queryEditorId={queryEditor.id}

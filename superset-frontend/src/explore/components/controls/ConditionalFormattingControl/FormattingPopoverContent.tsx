@@ -16,15 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useState } from 'react';
-import { styled, t } from '@superset-ui/core';
-import {
-  GenericDataType,
-  styled,
-  SupersetTheme,
-  t,
-  useTheme,
-} from '@superset-ui/core';
+import { useState, useMemo, useEffect } from 'react';
+import { GenericDataType, styled, t } from '@superset-ui/core';
 import {
   Comparator,
   MultipleValueComparators,
@@ -263,6 +256,8 @@ export const FormattingPopoverContent = ({
   const [previousColumnType, setPreviousColumnType] = useState<
     GenericDataType | undefined
   >();
+
+  const [form] = Form.useForm();
 
   const columnType = useMemo(
     () => columns.find(item => item.value === column)?.dataType,
