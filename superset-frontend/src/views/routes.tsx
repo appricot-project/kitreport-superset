@@ -337,7 +337,7 @@ if (isAdmin) {
       Component: GroupsList,
     },
     {
-      path: '/material-library/list/',
+      path: '/superset/library/',
       Component: MaterialLibraryList,
     },
   );

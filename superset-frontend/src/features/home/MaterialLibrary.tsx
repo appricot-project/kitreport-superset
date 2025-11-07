@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { t, styled } from '@superset-ui/core';
 import { EmptyState, Loading } from '@superset-ui/core/components';
 
 import { TableTab } from 'src/views/CRUD/types';
 import withToasts from 'src/components/MessageToasts/withToasts';
+import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
+import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import { useMaterialManifest } from 'src/features/materialLibrary/useMaterialManifest';
 import {
   isMaterialTab,
@@ -64,6 +67,10 @@ function MaterialLibrary() {
   const history = useHistory();
   const [activeTab, setActiveTab] = useState<MaterialTab>(TableTab.Strategic);
   const { data, isLoading } = useMaterialManifest();
+  const user = useSelector<any, UserWithPermissionsAndRoles>(
+    state => state.user,
+  );
+  const isAdmin = isUserAdmin(user);
 
   console.log('data ===', data);
 
@@ -96,16 +103,19 @@ function MaterialLibrary() {
           activeChild={activeTab}
           backgroundColor="transparent"
           tabs={menuTabs}
-          // TODO: показывать кнопку только админу
-          buttons={[
-            {
-              name: t('Посмотреть все'),
-              buttonStyle: 'link',
-              onClick: () => {
-                history.push('/material-library/list');
-              },
-            },
-          ]}
+          buttons={
+            isAdmin
+              ? [
+                  {
+                    name: t('Посмотреть все'),
+                    buttonStyle: 'link',
+                    onClick: () => {
+                      history.push('/superset/library/');
+                    },
+                  },
+                ]
+              : undefined
+          }
         />
       </TopBar>
 
