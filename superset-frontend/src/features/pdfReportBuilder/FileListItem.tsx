@@ -1,4 +1,4 @@
-import { Document, Page } from 'react-pdf';
+import { memo } from 'react';
 import { Space, Popconfirm } from 'antd';
 import { SortableElement } from 'react-sortable-hoc';
 import { t } from '@superset-ui/core';
@@ -22,6 +22,7 @@ import {
   DeleteButton,
 } from './styles';
 import { formatFileSize } from './utils';
+import PdfThumbnail from './PdfThumbnail';
 
 type UploadedFileWithPreview = UploadedFile & { file?: File; size?: number };
 
@@ -33,27 +34,14 @@ interface FileListItemProps {
   onRemove: (index: number) => void;
 }
 
-const FileListItem = SortableElement(
+const BaseFileListItem = memo(
   ({ file, idx, onPreview, onDownload, onRemove }: FileListItemProps) => (
     <StyledListItem>
       <FileItem>
         <FileNumber>{idx + 1}</FileNumber>
         {file.file && (
           <PdfPreviewWrapper>
-            <Document
-              file={file.file}
-              error={null}
-              loading={null}
-              noData={null}
-            >
-              <Page
-                height={130}
-                pageNumber={1}
-                renderAnnotationLayer={false}
-                renderTextLayer={false}
-                width={91}
-              />
-            </Document>
+            <PdfThumbnail file={file.file} />
           </PdfPreviewWrapper>
         )}
         <FileInfo>
@@ -93,7 +81,18 @@ const FileListItem = SortableElement(
       </FileItem>
     </StyledListItem>
   ),
+  (prevProps, nextProps) =>
+    prevProps.file.key === nextProps.file.key &&
+    prevProps.file.file === nextProps.file.file &&
+    prevProps.idx === nextProps.idx &&
+    prevProps.onPreview === nextProps.onPreview &&
+    prevProps.onDownload === nextProps.onDownload &&
+    prevProps.onRemove === nextProps.onRemove,
 );
+
+BaseFileListItem.displayName = 'BaseFileListItem';
+
+const FileListItem = SortableElement(BaseFileListItem);
 
 export default FileListItem;
 export type { UploadedFileWithPreview };

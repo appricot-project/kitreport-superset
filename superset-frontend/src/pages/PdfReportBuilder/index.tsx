@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { SortableContainer } from 'react-sortable-hoc';
 import { pdfjs } from 'react-pdf';
 import { t } from '@superset-ui/core';
@@ -24,12 +24,12 @@ import {
   PageContainer,
   ContentHeader,
   ActionsBlock,
-} from 'src/features/pdfReportBuilder//styles';
+} from 'src/features/pdfReportBuilder/styles';
 import FileListItem, {
   UploadedFileWithPreview,
-} from 'src/features/pdfReportBuilder//FileListItem';
-import FileUploadZone from 'src/features/pdfReportBuilder//FileUploadZone';
-import FileListHeader from 'src/features/pdfReportBuilder//FileListHeader';
+} from 'src/features/pdfReportBuilder/FileListItem';
+import FileUploadZone from 'src/features/pdfReportBuilder/FileUploadZone';
+import FileListHeader from 'src/features/pdfReportBuilder/FileListHeader';
 
 import 'src/features/pdfReportBuilder/sortable-helper.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -106,11 +106,11 @@ export default function PdfReportBuilder() {
     return false;
   };
 
-  const onRemove = (index: number) => {
+  const onRemove = useCallback((index: number) => {
     setFileList(files => files.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const onPreview = async (key: string) => {
+  const onPreview = useCallback(async (key: string) => {
     try {
       const blob = await downloadPdfFile(key);
       const url = window.URL.createObjectURL(blob);
@@ -118,9 +118,9 @@ export default function PdfReportBuilder() {
     } catch (e: any) {
       message.error(t('Ошибка при открытии файла: %s', e.message));
     }
-  };
+  }, []);
 
-  const onDownload = async (key: string, fileName: string) => {
+  const onDownload = useCallback(async (key: string, fileName: string) => {
     try {
       const blob = await downloadPdfFile(key);
       const url = window.URL.createObjectURL(blob);
@@ -133,29 +133,26 @@ export default function PdfReportBuilder() {
     } catch (e: any) {
       message.error(t('Ошибка при скачивании файла: %s', e.message));
     }
-  };
+  }, []);
 
-  const onRemoveAll = () => {
+  const onRemoveAll = useCallback(() => {
     setFileList([]);
     message.success(t('Все файлы удалены'));
-  };
+  }, []);
 
-  const onSortStart = () => {
+  const onSortStart = useCallback(() => {
     document.body.classList.add('dragging');
-  };
+  }, []);
 
-  const onSortEnd = ({
-    oldIndex,
-    newIndex,
-  }: {
-    oldIndex: number;
-    newIndex: number;
-  }) => {
-    document.body.classList.remove('dragging');
-    if (oldIndex !== newIndex) {
-      setFileList(files => arrayMove(files, oldIndex, newIndex));
-    }
-  };
+  const onSortEnd = useCallback(
+    ({ oldIndex, newIndex }: { oldIndex: number; newIndex: number }) => {
+      document.body.classList.remove('dragging');
+      if (oldIndex !== newIndex) {
+        setFileList(files => arrayMove(files, oldIndex, newIndex));
+      }
+    },
+    [],
+  );
 
   const handleMerge = async () => {
     if (fileList.length < 2) {
@@ -209,33 +206,35 @@ export default function PdfReportBuilder() {
     }
   };
 
-  const SortableList = SortableContainer(
-    ({ items }: { items: UploadedFileWithPreview[] }) => (
-      <List
-        bordered
-        dataSource={items}
-        locale={{ emptyText: t('Нет выбранных файлов') }}
-        renderItem={(file, idx) => (
-          <FileListItem
-            key={`item-${file.key}`}
-            index={idx}
-            file={file}
-            idx={idx}
-            onPreview={onPreview}
-            onDownload={onDownload}
-            onRemove={onRemove}
-          />
-        )}
-        style={{
-          marginTop: 12,
-          marginBottom: 24,
-          overflow: 'visible',
-          padding: '16px',
-          borderRadius: '12px',
-          background: '#fafbfc',
-        }}
-      />
-    ),
+  const SortableList = useMemo(
+    () =>
+      SortableContainer(({ items }: { items: UploadedFileWithPreview[] }) => (
+        <List
+          bordered
+          dataSource={items}
+          locale={{ emptyText: t('Нет выбранных файлов') }}
+          renderItem={(file, idx) => (
+            <FileListItem
+              key={file.key}
+              index={idx}
+              file={file}
+              idx={idx}
+              onPreview={onPreview}
+              onDownload={onDownload}
+              onRemove={onRemove}
+            />
+          )}
+          style={{
+            marginTop: 12,
+            marginBottom: 24,
+            overflow: 'visible',
+            padding: '16px',
+            borderRadius: '12px',
+            background: '#fafbfc',
+          }}
+        />
+      )),
+    [onPreview, onDownload, onRemove],
   );
 
   return (

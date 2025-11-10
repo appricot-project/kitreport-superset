@@ -61,8 +61,7 @@ export const StyledListItem = styled(List.Item)`
 
   transition:
     background 0.18s,
-    box-shadow 0.18s,
-    transform 0.2s ease;
+    box-shadow 0.18s;
   cursor: grab;
 
   &:hover {
