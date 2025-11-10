@@ -20,7 +20,7 @@
     },
     "typeRoots": ["src/types", "node_modules/@types"]
   },
-  "exclude": ["./packages/generator-superset/test/**/*"],
+  "exclude": ["./packages/generator-superset/test/**/*", "node_modules"],
   "include": [
     "./src/**/*",
     "./spec/**/*",

@@ -172,6 +172,31 @@ if (!isDevMode) {
           '**/*.stories.{ts,tsx,js,jsx}',
           '**/*.{test,spec}.{ts,tsx,js,jsx}',
         ],
+        configFile: path.resolve(__dirname, 'tsconfig.json'),
+        configOverwrite: {
+          compilerOptions: {
+            skipLibCheck: true,
+            noImplicitAny: false,
+          },
+          exclude: [
+            'node_modules',
+            '**/*.stories.*',
+            '**/*.test.*',
+            '**/*.spec.*',
+          ],
+        },
+      },
+      issue: {
+        exclude: [
+          { file: '**/node_modules/**' },
+          { file: '**/@deck.gl/**' },
+          { origin: 'typescript' },
+        ],
+      },
+      logger: {
+        infrastructure: 'silent',
+        issues: 'console',
+        devServer: false,
       },
     }),
   );
