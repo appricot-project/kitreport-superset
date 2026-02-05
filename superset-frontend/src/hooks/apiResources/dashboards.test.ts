@@ -20,6 +20,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import fetchMock from 'fetch-mock';
 import { useDashboardDatasets } from './dashboards';
 
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('useDashboardDatasets', () => {
   const mockDatasets = [
     {
@@ -52,10 +53,10 @@ describe('useDashboardDatasets', () => {
   ];
 
   beforeEach(() => {
-    fetchMock.reset();
+    fetchMock.clearHistory().removeRoutes();
   });
 
-  it('adds currencyFormats to datasets', async () => {
+  test('adds currencyFormats to datasets', async () => {
     fetchMock.get('glob:*/api/v1/dashboard/*/datasets', {
       result: mockDatasets,
     });

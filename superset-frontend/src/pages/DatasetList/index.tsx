@@ -16,14 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  getExtensionsRegistry,
-  styled,
-  SupersetClient,
-  useTheme,
-  css,
-  t,
-} from '@superset-ui/core';
+import { t } from '@apache-superset/core';
+import { getExtensionsRegistry, SupersetClient } from '@superset-ui/core';
+import { styled, useTheme, css } from '@apache-superset/core/ui';
 import { FunctionComponent, useState, useMemo, useCallback, Key } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import rison from 'rison';
@@ -278,12 +273,17 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
     setDatasetCurrentlyDuplicating(dataset);
   };
 
-  const handleBulkDatasetExport = (datasetsToExport: Dataset[]) => {
+  const handleBulkDatasetExport = async (datasetsToExport: Dataset[]) => {
     const ids = datasetsToExport.map(({ id }) => id);
-    handleResourceExport('dataset', ids, () => {
-      setPreparingExport(false);
-    });
     setPreparingExport(true);
+    try {
+      await handleResourceExport('dataset', ids, () => {
+        setPreparingExport(false);
+      });
+    } catch (error) {
+      setPreparingExport(false);
+      addDangerToast(t('There was an issue exporting the selected datasets'));
+    }
   };
 
   const columns = useMemo(

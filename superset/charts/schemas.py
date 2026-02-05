@@ -24,6 +24,7 @@ from flask import current_app
 from flask_babel import gettext as _
 from marshmallow import EXCLUDE, fields, post_load, Schema, validate
 from marshmallow.validate import Length, Range
+from marshmallow_union import Union
 
 from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
 from superset.db_engine_specs.base import builtin_time_grains
@@ -1017,6 +1018,24 @@ class ChartDataExtrasSchema(Schema):
         },
         allow_none=True,
     )
+    column_order = fields.List(
+        fields.String(),
+        metadata={
+            "description": (
+                "Ordered list of column names for result ordering. "
+                "Used to preserve user's column reordering (including mixed "
+                "dimension columns and metrics)"
+            )
+        },
+        allow_none=True,
+    )
+    transpile_to_dialect = fields.Boolean(
+        metadata={
+            "description": "If true, WHERE/HAVING clauses will be transpiled to the "
+            "target database dialect using SQLGlot."
+        },
+        allow_none=True,
+    )
 
 
 class AnnotationLayerSchema(Schema):
@@ -1132,8 +1151,9 @@ class AnnotationLayerSchema(Schema):
 
 class ChartDataDatasourceSchema(Schema):
     description = "Chart datasource"
-    id = fields.Integer(
-        metadata={"description": "Datasource id"},
+    id = Union(
+        [fields.Integer(), fields.UUID()],
+        metadata={"description": "Datasource id or uuid"},
         required=True,
     )
     type = fields.String(
@@ -1451,6 +1471,13 @@ class ChartDataResponseResult(Schema):
         required=True,
         allow_none=True,
     )
+    queried_dttm = fields.String(
+        metadata={
+            "description": "UTC timestamp when the query was executed (ISO 8601 format)"
+        },
+        required=True,
+        allow_none=True,
+    )
     cache_timeout = fields.Integer(
         metadata={
             "description": "Cache timeout in following order: custom timeout, datasource "  # noqa: E501
@@ -1469,9 +1496,12 @@ class ChartDataResponseResult(Schema):
         allow_none=None,
     )
     query = fields.String(
-        metadata={"description": "The executed query statement"},
-        required=True,
-        allow_none=False,
+        metadata={
+            "description": "The executed query statement. May be absent when "
+            "validation errors occur."
+        },
+        required=False,
+        allow_none=True,
     )
     status = fields.String(
         metadata={"description": "Status of the query"},
@@ -1509,6 +1539,15 @@ class ChartDataResponseResult(Schema):
     )
     rejected_filters = fields.List(
         fields.Dict(), metadata={"description": "A list with rejected filters"}
+    )
+    detected_currency = fields.String(
+        metadata={
+            "description": "Detected ISO 4217 currency code when AUTO mode is used. "
+            "Returns the currency code if all filtered data contains a single currency "
+            "or null if multiple currencies are present."
+        },
+        allow_none=True,
+        load_default=None,
     )
     from_dttm = fields.Integer(
         metadata={"description": "Start timestamp of time range"},

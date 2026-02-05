@@ -35,6 +35,11 @@ import { Slice } from 'src/types/Chart';
 
 export type SaveActionType = 'overwrite' | 'saveas';
 
+export enum ChartStatusType {
+  overwrite = 'overwrite',
+  saveas = 'saveas',
+}
+
 export type ChartStatus =
   | 'loading'
   | 'rendered'
@@ -98,7 +103,6 @@ export interface ExploreResponsePayload {
 export interface ExplorePageState {
   user: UserWithPermissionsAndRoles;
   common: {
-    flash_messages: string[];
     conf: JsonObject;
     locale: string;
   };
@@ -123,4 +127,18 @@ export interface ExplorePageState {
     common: JsonObject;
   };
   sliceEntities?: JsonObject; // propagated from Dashboard view
+}
+
+export interface TabNode {
+  value: string;
+  title: string;
+  parents: string[];
+  children?: TabNode[];
+}
+
+export interface TabTreeNode {
+  value: string;
+  title: string;
+  key: string;
+  children?: TabTreeNode[];
 }

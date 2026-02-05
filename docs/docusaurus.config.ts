@@ -19,9 +19,150 @@
 
 import type { Config } from '@docusaurus/types';
 import type { Options, ThemeConfig } from '@docusaurus/preset-classic';
+import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 import { themes } from 'prism-react-renderer';
+import remarkImportPartial from 'remark-import-partial';
+import remarkLocalizeBadges from './plugins/remark-localize-badges.mjs';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const { github: lightCodeTheme, vsDark: darkCodeTheme } = themes;
+
+// Load version configuration from external file
+const versionsConfigPath = path.join(__dirname, 'versions-config.json');
+const versionsConfig = JSON.parse(fs.readFileSync(versionsConfigPath, 'utf8'));
+
+// Build plugins array dynamically based on disabled flags
+const dynamicPlugins = [];
+
+// Add components plugin if not disabled
+if (!versionsConfig.components.disabled) {
+  dynamicPlugins.push([
+    '@docusaurus/plugin-content-docs',
+    {
+      id: 'components',
+      path: 'components',
+      routeBasePath: 'components',
+      sidebarPath: require.resolve('./sidebarComponents.js'),
+      editUrl:
+        'https://github.com/apache/superset/edit/master/docs/components',
+      remarkPlugins: [remarkImportPartial, remarkLocalizeBadges],
+      admonitions: {
+        keywords: ['note', 'tip', 'info', 'warning', 'danger', 'resources'],
+        extendDefaults: true,
+      },
+      docItemComponent: '@theme/DocItem',
+      includeCurrentVersion: versionsConfig.components.includeCurrentVersion,
+      lastVersion: versionsConfig.components.lastVersion,
+      onlyIncludeVersions: versionsConfig.components.onlyIncludeVersions,
+      versions: versionsConfig.components.versions,
+      disableVersioning: false,
+      showLastUpdateAuthor: true,
+      showLastUpdateTime: true,
+    },
+  ]);
+}
+
+// Add developer_portal plugin if not disabled
+if (!versionsConfig.developer_portal.disabled) {
+  dynamicPlugins.push([
+    '@docusaurus/plugin-content-docs',
+    {
+      id: 'developer_portal',
+      path: 'developer_portal',
+      routeBasePath: 'developer_portal',
+      sidebarPath: require.resolve('./sidebarTutorials.js'),
+      editUrl:
+        'https://github.com/apache/superset/edit/master/docs/developer_portal',
+      remarkPlugins: [remarkImportPartial, remarkLocalizeBadges],
+      admonitions: {
+        keywords: ['note', 'tip', 'info', 'warning', 'danger', 'resources'],
+        extendDefaults: true,
+      },
+      docItemComponent: '@theme/DocItem',
+      includeCurrentVersion: versionsConfig.developer_portal.includeCurrentVersion,
+      lastVersion: versionsConfig.developer_portal.lastVersion,
+      onlyIncludeVersions: versionsConfig.developer_portal.onlyIncludeVersions,
+      versions: versionsConfig.developer_portal.versions,
+      disableVersioning: false,
+      showLastUpdateAuthor: true,
+      showLastUpdateTime: true,
+    },
+  ]);
+}
+
+// Build navbar items dynamically based on disabled flags
+const dynamicNavbarItems = [];
+
+// Add Component Playground navbar item if not disabled
+if (!versionsConfig.components.disabled) {
+  dynamicNavbarItems.push({
+    label: 'Component Playground',
+    to: '/components',
+    items: [
+      {
+        label: 'Introduction',
+        to: '/components',
+      },
+      {
+        label: 'UI Components',
+        to: '/components/ui-components/button',
+      },
+      {
+        label: 'Chart Components',
+        to: '/components/chart-components/bar-chart',
+      },
+      {
+        label: 'Layout Components',
+        to: '/components/layout-components/grid',
+      },
+    ],
+  });
+}
+
+// Add Developer Portal navbar item if not hidden from nav
+if (!versionsConfig.developer_portal.disabled && !versionsConfig.developer_portal.hideFromNav) {
+  dynamicNavbarItems.push({
+    label: 'Developer Portal',
+    position: 'left',
+    items: [
+      {
+        type: 'doc',
+        docsPluginId: 'developer_portal',
+        docId: 'index',
+        label: 'Overview',
+      },
+      {
+        type: 'doc',
+        docsPluginId: 'developer_portal',
+        docId: 'contributing/overview',
+        label: 'Contributing',
+      },
+      {
+        type: 'doc',
+        docsPluginId: 'developer_portal',
+        docId: 'extensions/overview',
+        label: 'Extensions',
+      },
+      {
+        type: 'doc',
+        docsPluginId: 'developer_portal',
+        docId: 'testing/overview',
+        label: 'Testing',
+      },
+      {
+        type: 'doc',
+        docsPluginId: 'developer_portal',
+        docId: 'components/index',
+        label: 'UI Components',
+      },
+      {
+        label: 'API Reference',
+        href: '/docs/api',
+      },
+    ],
+  });
+}
 
 const config: Config = {
   title: 'Superset',
@@ -29,7 +170,7 @@ const config: Config = {
     'Apache Superset is a modern data exploration and visualization platform',
   url: 'https://superset.apache.org',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'throw',
   markdown: {
     mermaid: true,
@@ -37,8 +178,14 @@ const config: Config = {
   favicon: '/img/favicon.ico',
   organizationName: 'apache',
   projectName: 'superset',
-  themes: ['@saucelabs/theme-github-codeblock', '@docusaurus/theme-mermaid'],
+  themes: [
+    '@saucelabs/theme-github-codeblock',
+    '@docusaurus/theme-mermaid',
+    '@docusaurus/theme-live-codeblock',
+    'docusaurus-theme-openapi-docs',
+  ],
   plugins: [
+    require.resolve('./src/webpack.extend.ts'),
     [
       'docusaurus-plugin-less',
       {
@@ -47,11 +194,33 @@ const config: Config = {
         },
       },
     ],
+    ...dynamicPlugins,
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'api',
+        docsPluginId: 'classic',
+        config: {
+          superset: {
+            specPath: 'static/resources/openapi.json',
+            outputDir: 'docs/api',
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+              sidebarCollapsible: true,
+              sidebarCollapsed: true,
+            },
+            showSchemas: true,
+            hideSendButton: true,
+            showInfoPage: false,
+            showExtensions: true,
+          } satisfies OpenApiPlugin.Options,
+        },
+      },
+    ],
     [
       '@docusaurus/plugin-client-redirects',
       {
-        fromExtensions: ['html', 'htm'],
-        toExtensions: ['exe', 'zip'],
         redirects: [
           {
             to: '/docs/installation/docker-compose',
@@ -82,7 +251,7 @@ const config: Config = {
             from: '/gallery.html',
           },
           {
-            to: '/docs/configuration/databases',
+            to: '/docs/databases',
             from: '/druid.html',
           },
           {
@@ -134,7 +303,7 @@ const config: Config = {
             from: '/docs/contributing/contribution-page',
           },
           {
-            to: '/docs/configuration/databases',
+            to: '/docs/databases',
             from: '/docs/databases/yugabyte/',
           },
           {
@@ -210,6 +379,19 @@ const config: Config = {
             }
             return `https://github.com/apache/superset/edit/master/docs/${versionDocsDirPath}/${docPath}`;
           },
+          remarkPlugins: [remarkImportPartial, remarkLocalizeBadges],
+          admonitions: {
+            keywords: ['note', 'tip', 'info', 'warning', 'danger', 'resources'],
+            extendDefaults: true,
+          },
+          includeCurrentVersion: versionsConfig.docs.includeCurrentVersion,
+          lastVersion: versionsConfig.docs.lastVersion,  // Make 'next' the default
+          onlyIncludeVersions: versionsConfig.docs.onlyIncludeVersions,
+          versions: versionsConfig.docs.versions,
+          disableVersioning: false,
+          showLastUpdateAuthor: true,
+          showLastUpdateTime: true,
+          docItemComponent: '@theme/ApiItem', // Required for OpenAPI docs
         },
         blog: {
           showReadingTime: true,
@@ -235,6 +417,13 @@ const config: Config = {
       apiKey: 'd0d22810f2e9b614ffac3a73b26891fe',
       indexName: 'superset-apache',
     },
+    mermaid: {
+      theme: { light: 'neutral', dark: 'dark' },
+      options: {
+        // Any Mermaid config options go here...
+        maxTextSize: 100000,
+      },
+    },
     navbar: {
       logo: {
         alt: 'Superset Logo',
@@ -244,20 +433,27 @@ const config: Config = {
       items: [
         {
           label: 'Documentation',
-          to: '/docs/intro',
+          position: 'left',
           items: [
             {
+              type: 'doc',
+              docId: 'intro',
               label: 'Getting Started',
-              to: '/docs/intro',
             },
             {
+              type: 'doc',
+              docId: 'databases/index',
+              label: 'Databases',
+            },
+            {
+              type: 'doc',
+              docId: 'faq',
               label: 'FAQ',
-              to: '/docs/faq',
             },
           ],
         },
         {
-          label: 'Community',
+          label: 'Community Resources',
           to: '/community',
           items: [
             {
@@ -280,8 +476,17 @@ const config: Config = {
               label: 'Stack Overflow',
               href: 'https://stackoverflow.com/questions/tagged/apache-superset',
             },
+            {
+              label: 'Community Calendar',
+              href: '/community#superset-community-calendar',
+            },
+            {
+              label: 'In the Wild',
+              href: '/inTheWild',
+            },
           ],
         },
+        ...dynamicNavbarItems,
         {
           href: '/docs/intro',
           position: 'right',
@@ -298,8 +503,10 @@ const config: Config = {
     footer: {
       links: [],
       copyright: `
-          <div class="footer__applitools">
-            We use &nbsp;<a href="https://applitools.com/" target="_blank" rel="nofollow"><img src="/img/applitools.png" title="Applitools" /></a>
+          <div class="footer__ci-services">
+            <span>CI powered by</span>
+            <a href="https://applitools.com/" target="_blank" rel="nofollow noopener noreferrer"><img src="/img/applitools.png" alt="Applitools" title="Applitools - Visual Testing" /></a>
+            <a href="https://www.netlify.com/" target="_blank" rel="nofollow noopener noreferrer"><img src="/img/netlify.png" alt="Netlify" title="Netlify - Deploy Previews" /></a>
           </div>
           <p>Copyright © ${new Date().getFullYear()},
           The <a href="https://www.apache.org/" target="_blank" rel="noreferrer">Apache Software Foundation</a>,
@@ -330,13 +537,15 @@ const config: Config = {
         hideable: true,
       },
     },
+    liveCodeBlock: {
+      playgroundPosition: 'bottom',
+    },
   } satisfies ThemeConfig,
   scripts: [
     // {
     //   src: 'https://www.bugherd.com/sidebarv2.js?apikey=enilpiu7bgexxsnoqfjtxa',
     //   async: true,
     // },
-    '/script/matomo.js',
     {
       src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
       async: true,
@@ -344,7 +553,7 @@ const config: Config = {
       'data-project-name': 'Apache Superset',
       'data-project-color': '#FFFFFF',
       'data-project-logo':
-        'https://images.seeklogo.com/logo-png/50/2/superset-icon-logo-png_seeklogo-500354.png',
+        'https://superset.apache.org/img/superset-logo-icon-only.png',
       'data-modal-override-open-id': 'ask-ai-input',
       'data-modal-override-open-class': 'search-input',
       'data-modal-disclaimer':

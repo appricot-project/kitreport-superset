@@ -18,34 +18,32 @@
  */
 import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import Split from 'react-split';
+import { t } from '@apache-superset/core';
 import {
-  css,
   DatasourceType,
   ensureIsArray,
   isFeatureEnabled,
   FeatureFlag,
   getChartMetadataRegistry,
-  styled,
   SupersetClient,
-  t,
-  useTheme,
   QueryFormData,
   JsonObject,
   getExtensionsRegistry,
 } from '@superset-ui/core';
+import { css, styled, useTheme, Alert } from '@apache-superset/core/ui';
 import ChartContainer from 'src/components/Chart/ChartContainer';
 import {
   getItem,
   setItem,
   LocalStorageKeys,
 } from 'src/utils/localStorageHelpers';
-import { Alert } from '@superset-ui/core/components';
 import { SaveDatasetModal } from 'src/SqlLab/components/SaveDatasetModal';
 import { getDatasourceAsSaveableDataset } from 'src/utils/datasourceUtils';
 import { buildV1ChartDataPayload } from 'src/explore/exploreUtils';
 import { getChartRequiredFieldsMissingMessage } from 'src/utils/getChartRequiredFieldsMissingMessage';
 import type { ChartState, Datasource } from 'src/explore/types';
 import type { Slice } from 'src/types/Chart';
+import LastQueriedLabel from 'src/components/LastQueriedLabel';
 import { DataTablesPane } from '../DataTablesPane';
 import { ChartPills } from '../ChartPills';
 import { ExploreAlert } from '../ExploreAlert';
@@ -395,10 +393,27 @@ const ExploreChartPanel = ({
               queriesResponse: chart.queriesResponse,
             })}
             {...(chart.chartStatus && { chartStatus: chart.chartStatus })}
-            hideRowCount={formData?.matrixify_enabled === true}
+            hideRowCount={
+              formData?.matrixify_enable_vertical_layout === true ||
+              formData?.matrixify_enable_horizontal_layout === true
+            }
+            formData={formData}
           />
         </ChartHeaderExtension>
         {renderChart()}
+        {!chart.chartStatus || chart.chartStatus !== 'loading' ? (
+          <div
+            css={css`
+              display: flex;
+              justify-content: flex-end;
+              padding-top: ${theme.sizeUnit * 2}px;
+            `}
+          >
+            <LastQueriedLabel
+              queriedDttm={chart.queriesResponse?.[0]?.queried_dttm ?? null}
+            />
+          </div>
+        ) : null}
       </div>
     ),
     [
@@ -412,8 +427,10 @@ const ExploreChartPanel = ({
       chart.chartUpdateEndTime,
       refreshCachedQuery,
       formData?.row_limit,
-      formData?.matrixify_enabled,
+      formData?.matrixify_enable_vertical_layout,
+      formData?.matrixify_enable_horizontal_layout,
       renderChart,
+      theme.sizeUnit,
     ],
   );
 

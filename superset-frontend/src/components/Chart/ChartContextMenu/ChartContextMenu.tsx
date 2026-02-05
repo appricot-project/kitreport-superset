@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+// Test comment for pre-commit
 import {
   forwardRef,
   ReactNode,
@@ -27,6 +28,7 @@ import {
 } from 'react';
 import ReactDOM from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { t } from '@apache-superset/core';
 import {
   Behavior,
   BinaryQueryObjectFilterClause,
@@ -38,9 +40,8 @@ import {
   getExtensionsRegistry,
   isFeatureEnabled,
   QueryFormData,
-  t,
-  useTheme,
 } from '@superset-ui/core';
+import { useTheme } from '@apache-superset/core/ui';
 import { RootState } from 'src/dashboard/types';
 import { MenuItem } from '@superset-ui/core/components/Menu';
 import { usePermissions } from 'src/hooks/usePermissions';
@@ -185,7 +186,10 @@ const ChartContextMenu = (
     isFeatureEnabled(FeatureFlag.DrillBy) &&
     canDrillBy &&
     isDisplayed(ContextMenuItem.DrillBy) &&
-    !formData.matrixify_enabled; // Disable drill by when matrixify is enabled
+    !(
+      formData.matrixify_enable_vertical_layout === true ||
+      formData.matrixify_enable_horizontal_layout === true
+    ); // Disable drill by when matrixify is enabled
 
   const datasetResource = useDatasetDrillInfo(
     formData.datasource,
@@ -269,7 +273,7 @@ const ChartContextMenu = (
     setShowModal: setDrillModalIsOpen,
     dataset: filteredDataset,
     isLoadingDataset,
-    ...(additionalConfig?.drillToDetail || {}),
+    ...additionalConfig?.drillToDetail,
   });
 
   if (showCrossFilters) {
@@ -419,6 +423,9 @@ const ChartContextMenu = (
         trigger={['click']}
         onOpenChange={value => {
           setVisible(value);
+          if (!value) {
+            onClose();
+          }
         }}
         open={visible}
       >

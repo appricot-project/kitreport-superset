@@ -28,6 +28,7 @@ import {
 import { QueryParamProvider } from 'use-query-params';
 
 import DashboardList from 'src/pages/DashboardList';
+import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
 
 const dashboardsInfoEndpoint = 'glob:*/api/v1/dashboard/_info*';
 const dashboardOwnersEndpoint = 'glob:*/api/v1/dashboard/related/owners*';
@@ -43,7 +44,7 @@ jest.mock('@superset-ui/core', () => ({
   isFeatureEnabled: jest.fn(),
 }));
 
-const mockDashboards = [...new Array(3)].map((_, i) => ({
+const mockDashboards = new Array(3).fill().map((_, i) => ({
   id: i,
   url: 'url',
   dashboard_title: `title ${i}`,
@@ -84,11 +85,12 @@ fetchMock.get(dashboardEndpoint, {
 global.URL.createObjectURL = jest.fn();
 fetchMock.get('/thumbnail', { body: new Blob(), sendAsJson: false });
 
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('DashboardList', () => {
   const renderDashboardList = (props = {}, userProp = mockUser) =>
     render(
       <MemoryRouter>
-        <QueryParamProvider>
+        <QueryParamProvider adapter={ReactRouter5Adapter}>
           <DashboardList {...props} user={userProp} />
         </QueryParamProvider>
       </MemoryRouter>,
@@ -99,47 +101,47 @@ describe('DashboardList', () => {
     isFeatureEnabled.mockImplementation(
       feature => feature === 'LISTVIEWS_DEFAULT_CARD_VIEW',
     );
-    fetchMock.resetHistory();
+    fetchMock.clearHistory();
   });
 
   afterEach(() => {
     isFeatureEnabled.mockRestore();
   });
 
-  it('renders', async () => {
+  test('renders', async () => {
     renderDashboardList();
     expect(await screen.findByText('Dashboards')).toBeInTheDocument();
   });
 
-  it('renders a ListView', async () => {
+  test('renders a ListView', async () => {
     renderDashboardList();
     expect(
       await screen.findByTestId('dashboard-list-view'),
     ).toBeInTheDocument();
   });
 
-  it('fetches info', async () => {
+  test('fetches info', async () => {
     renderDashboardList();
     await waitFor(() => {
-      const calls = fetchMock.calls(/dashboard\/_info/);
+      const calls = fetchMock.callHistory.calls(/dashboard\/_info/);
       expect(calls).toHaveLength(1);
     });
   });
 
-  it('fetches data', async () => {
+  test('fetches data', async () => {
     renderDashboardList();
     await waitFor(() => {
-      const calls = fetchMock.calls(/dashboard\/\?q/);
+      const calls = fetchMock.callHistory.calls(/dashboard\/\?q/);
       expect(calls).toHaveLength(1);
     });
 
-    const calls = fetchMock.calls(/dashboard\/\?q/);
-    expect(calls[0][0]).toMatchInlineSnapshot(
+    const calls = fetchMock.callHistory.calls(/dashboard\/\?q/);
+    expect(calls[0].url).toMatchInlineSnapshot(
       `"http://localhost/api/v1/dashboard/?q=(order_column:changed_on_delta_humanized,order_direction:desc,page:0,page_size:25,select_columns:!(id,dashboard_title,published,url,slug,changed_by,changed_by.id,changed_by.first_name,changed_by.last_name,changed_on_delta_humanized,owners,owners.id,owners.first_name,owners.last_name,tags.id,tags.name,tags.type,status,certified_by,certification_details,changed_on))"`,
     );
   });
 
-  it('switches between card and table view', async () => {
+  test('switches between card and table view', async () => {
     renderDashboardList();
 
     // Wait for the list to load
@@ -159,7 +161,7 @@ describe('DashboardList', () => {
     fireEvent.click(cardViewButton);
   });
 
-  it('shows edit modal', async () => {
+  test('shows edit modal', async () => {
     renderDashboardList();
 
     // Wait for data to load
@@ -181,7 +183,7 @@ describe('DashboardList', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('shows delete confirmation', async () => {
+  test('shows delete confirmation', async () => {
     renderDashboardList();
 
     // Wait for data to load
@@ -205,7 +207,7 @@ describe('DashboardList', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders an "Import Dashboard" tooltip', async () => {
+  test('renders an "Import Dashboard" tooltip', async () => {
     renderDashboardList();
 
     const importButton = await screen.findByTestId('import-button');
@@ -219,11 +221,12 @@ describe('DashboardList', () => {
   });
 });
 
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('DashboardList - anonymous view', () => {
-  it('does not render favorite stars for anonymous user', async () => {
+  test('does not render favorite stars for anonymous user', async () => {
     render(
       <MemoryRouter>
-        <QueryParamProvider>
+        <QueryParamProvider adapter={ReactRouter5Adapter}>
           <DashboardList user={{}} />
         </QueryParamProvider>
       </MemoryRouter>,

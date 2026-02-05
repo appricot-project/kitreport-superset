@@ -123,10 +123,15 @@ const renderModal = async (
 
 beforeEach(() => {
   fetchMock
-    .post(CHART_DATA_ENDPOINT, { body: {} }, {})
-    .post(FORM_DATA_KEY_ENDPOINT, { key: '123' });
+    .post(CHART_DATA_ENDPOINT, { body: {} }, { name: CHART_DATA_ENDPOINT })
+    .post(
+      FORM_DATA_KEY_ENDPOINT,
+      { key: '123' },
+      { name: FORM_DATA_KEY_ENDPOINT },
+    );
 });
-afterEach(() => fetchMock.restore());
+
+afterEach(() => fetchMock.removeRoutes().clearHistory());
 
 test('should render the title', async () => {
   await renderModal();
@@ -149,12 +154,11 @@ test('should close the modal', async () => {
 });
 
 test('should render loading indicator', async () => {
+  fetchMock.removeRoute(CHART_DATA_ENDPOINT);
   fetchMock.post(
     CHART_DATA_ENDPOINT,
     { body: {} },
-    // delay is missing in fetch-mock types
-    // @ts-ignore
-    { overwriteRoutes: true, delay: 1000 },
+    { name: CHART_DATA_ENDPOINT, delay: 1000 },
   );
   await renderModal();
   expect(screen.getByLabelText('Loading')).toBeInTheDocument();
@@ -175,7 +179,7 @@ test('should generate Explore url', async () => {
       groupbyFieldName: 'groupby',
     },
   });
-  await waitFor(() => fetchMock.called(CHART_DATA_ENDPOINT));
+  await waitFor(() => fetchMock.callHistory.called(CHART_DATA_ENDPOINT));
   const expectedRequestPayload = {
     form_data: {
       ...omitBy(
@@ -204,7 +208,7 @@ test('should generate Explore url', async () => {
   };
 
   const parsedRequestPayload = JSON.parse(
-    fetchMock.lastCall()?.[1]?.body as string,
+    fetchMock.callHistory.lastCall()?.options?.body as string,
   );
 
   expect(parsedRequestPayload.form_data).toEqual(
@@ -281,6 +285,7 @@ test('should render "Edit chart" enabled with can_explore permission', async () 
   expect(screen.getByRole('button', { name: 'Edit chart' })).toBeEnabled();
 });
 
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('Embedded mode behavior', () => {
   // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
   const { isEmbedded } = require('src/dashboard/util/isEmbedded');
@@ -316,9 +321,9 @@ describe('Embedded mode behavior', () => {
       },
     });
 
-    await waitFor(() => fetchMock.called(CHART_DATA_ENDPOINT));
+    await waitFor(() => fetchMock.callHistory.called(CHART_DATA_ENDPOINT));
 
-    expect(fetchMock.called(FORM_DATA_KEY_ENDPOINT)).toBe(false);
+    expect(fetchMock.callHistory.called(FORM_DATA_KEY_ENDPOINT)).toBe(false);
   });
 
   test('should render "Edit chart" button in non-embedded mode', async () => {
@@ -342,10 +347,10 @@ describe('Embedded mode behavior', () => {
       },
     });
 
-    await waitFor(() => fetchMock.called(CHART_DATA_ENDPOINT));
+    await waitFor(() => fetchMock.callHistory.called(CHART_DATA_ENDPOINT));
 
     await waitFor(() => {
-      expect(fetchMock.called(FORM_DATA_KEY_ENDPOINT)).toBe(true);
+      expect(fetchMock.callHistory.called(FORM_DATA_KEY_ENDPOINT)).toBe(true);
     });
 
     expect(
@@ -357,6 +362,7 @@ describe('Embedded mode behavior', () => {
   });
 });
 
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('Table view with pagination', () => {
   beforeEach(() => {
     // Mock a large dataset response for pagination testing
@@ -373,13 +379,14 @@ describe('Table view with pagination', () => {
       ],
     };
 
+    fetchMock.removeRoute(CHART_DATA_ENDPOINT);
     fetchMock.post(CHART_DATA_ENDPOINT, mockLargeDataset, {
-      overwriteRoutes: true,
+      name: CHART_DATA_ENDPOINT,
     });
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.clearHistory();
   });
 
   test('should render table view when Table radio is selected', async () => {
@@ -504,6 +511,7 @@ describe('Table view with pagination', () => {
 
   test('should handle empty results in table view', async () => {
     // Mock empty dataset response
+    fetchMock.removeRoute(CHART_DATA_ENDPOINT);
     fetchMock.post(
       CHART_DATA_ENDPOINT,
       {
@@ -515,7 +523,7 @@ describe('Table view with pagination', () => {
           },
         ],
       },
-      { overwriteRoutes: true },
+      { name: CHART_DATA_ENDPOINT },
     );
 
     await renderModal({

@@ -37,8 +37,9 @@ logger = logging.getLogger(__name__)
 # might contain thousands of errors.
 MAX_DISPLAYED_ERRORS = 5
 
-READ_CSV_CHUNK_SIZE = 1000
-ROWS_TO_READ_METADATA = 2
+ROWS_TO_READ_METADATA = 100
+DEFAULT_ENCODING = "utf-8"
+ENCODING_FALLBACKS = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
 
 
 class CSVReaderOptions(ReaderOptions, total=False):
@@ -66,6 +67,87 @@ class CSVReader(BaseDataReader):
         super().__init__(
             options=dict(options),
         )
+
+    @staticmethod
+    def _find_invalid_values_numeric(df: pd.DataFrame, column: str) -> pd.Series:
+        """
+        Find invalid values for numeric type conversion.
+
+        Identifies rows where values cannot be converted to numeric types using
+        pandas to_numeric with error coercing. Returns a boolean mask indicating
+        which values are invalid (non-null but unconvertible).
+
+        :param df: DataFrame containing the data
+        :param column: Name of the column to check for invalid values
+
+        :return: Boolean Series indicating which rows have invalid
+        values for numeric conversion
+        """
+        converted = pd.to_numeric(df[column], errors="coerce")
+        return converted.isna() & df[column].notna()
+
+    @staticmethod
+    def _find_invalid_values_non_numeric(
+        df: pd.DataFrame, column: str, dtype: str
+    ) -> pd.Series:
+        """
+        Find invalid values for non-numeric type conversion.
+
+        Identifies rows where values cannot be converted to the specified non-numeric
+        data type by attempting conversion and catching exceptions. This is used for
+        string, categorical, or other non-numeric type conversions.
+
+        :param df: DataFrame containing the data
+        :param column: Name of the column to check for invalid values
+        :param dtype: Target data type for conversion (e.g., 'string', 'category')
+
+        :return: Boolean Series indicating which rows have
+        invalid values for the target type
+        """
+        invalid_mask = pd.Series([False] * len(df), index=df.index)
+        for idx, value in df[column].items():
+            if pd.notna(value):
+                try:
+                    pd.Series([value]).astype(dtype)
+                except (ValueError, TypeError):
+                    invalid_mask[idx] = True
+        return invalid_mask
+
+    @staticmethod
+    def _select_optimal_engine() -> str:
+        """Select the best available CSV parsing engine"""
+        try:
+            # Check if pyarrow is available as a separate package
+            pyarrow_spec = util.find_spec("pyarrow")
+            if not pyarrow_spec:
+                return "c"
+
+            # Import pyarrow to verify it works properly
+            import pyarrow as pa  # noqa: F401
+
+            # Check if pandas has built-in pyarrow support
+            pandas_version = str(pd.__version__)
+            has_builtin_pyarrow = "pyarrow" in pandas_version
+
+            if has_builtin_pyarrow:
+                # Pandas has built-in pyarrow, safer to use c engine
+                logger.info("Pandas has built-in pyarrow support, using 'c' engine")
+                return "c"
+            else:
+                # External pyarrow available, can safely use it
+                logger.info("Using 'pyarrow' engine for CSV parsing")
+                return "pyarrow"
+
+        except ImportError:
+            # PyArrow import failed, fall back to c engine
+            logger.info("PyArrow not properly installed, falling back to 'c' engine")
+            return "c"
+        except Exception as ex:
+            # Any other error, fall back to c engine
+            logger.warning(
+                "Error selecting CSV engine: %s, falling back to 'c' engine", ex
+            )
+            return "c"
 
     @staticmethod
     def _find_invalid_values_numeric(df: pd.DataFrame, column: str) -> pd.Series:
@@ -148,8 +230,8 @@ class CSVReader(BaseDataReader):
             invalid_value = df.loc[idx, column]
             line_number = idx + kwargs.get("header", 0) + 2
             error_details.append(
-                f"  • Line {line_number}: '{invalid_value}' cannot be converted to "
-                f"{dtype}"
+                "  • Line %s: '%s' cannot be converted to %s"
+                % (line_number, invalid_value, dtype)
             )
 
         return error_details, total_errors
@@ -287,7 +369,35 @@ class CSVReader(BaseDataReader):
         return custom_types, pandas_types
 
     @staticmethod
-    def _read_csv(file: FileStorage, kwargs: dict[str, Any]) -> pd.DataFrame:
+    def _read_csv(  # noqa: C901
+        file: FileStorage,
+        kwargs: dict[str, Any],
+    ) -> pd.DataFrame:
+        encoding = kwargs.get("encoding", DEFAULT_ENCODING)
+
+        # PyArrow engine doesn't support iterator/chunksize/nrows
+        # It also has known issues with date parsing and missing values
+        # Default to "c" engine for stability
+        has_unsupported_options = (
+            "chunksize" in kwargs
+            or "iterator" in kwargs
+            or kwargs.get("nrows") is not None
+            or kwargs.get("parse_dates")  # Has bugs with multiple date columns
+            or kwargs.get("na_values")  # Has bugs with missing value handling
+        )
+
+        # Use PyArrow engine if feature flag is enabled and options are compatible
+        if (
+            is_feature_enabled("CSV_UPLOAD_PYARROW_ENGINE")
+            and not has_unsupported_options
+        ):
+            kwargs["engine"] = CSVReader._select_optimal_engine()
+        else:
+            # Default to c engine for reliability
+            kwargs["engine"] = "c"
+
+        kwargs["low_memory"] = False
+
         try:
             types = None
             if "dtype" in kwargs and kwargs["dtype"]:
@@ -313,12 +423,68 @@ class CSVReader(BaseDataReader):
                     **kwargs,
                 )
 
+                for chunk in chunk_iterator:
+                    # Check if adding this chunk would exceed the row limit
+                    if max_rows is not None and total_rows + len(chunk) > max_rows:
+                        # Only take the needed rows from this chunk
+                        remaining_rows = max_rows - total_rows
+                        chunk = chunk.iloc[:remaining_rows]
+                        chunks.append(chunk)
+                        break
+
+                    chunks.append(chunk)
+                    total_rows += len(chunk)
+
+                    # Break if we've reached the desired number of rows
+                    if max_rows is not None and total_rows >= max_rows:
+                        break
+
+                if chunks:
+                    try:
+                        result = pd.concat(chunks, ignore_index=False)
+                    except Exception as ex:
+                        logger.warning(
+                            "Error concatenating CSV chunks: %s. "
+                            "This may be due to inconsistent date parsing "
+                            "across chunks.",
+                            str(ex),
+                        )
+                        raise
+
+                    # When using chunking, we need to reset and rebuild the index
+                    if kwargs.get("index_col") is not None:
+                        # The index was already set by pandas during read_csv
+                        # Just need to ensure it's properly named after concatenation
+                        index_col = kwargs.get("index_col")
+                        if isinstance(index_col, str):
+                            result.index.name = index_col
+                    df = result
+            else:
+                df = pd.read_csv(
+                    filepath_or_buffer=file.stream,
+                    **kwargs,
+                )
+
             if types:
                 df = CSVReader._cast_column_types(df, types, kwargs)
 
             return df
         except DatabaseUploadFailed:
             raise
+        except UnicodeDecodeError as ex:
+            if encoding != DEFAULT_ENCODING:
+                raise DatabaseUploadFailed(
+                    message=_("Parsing error: %(error)s", error=str(ex))
+                ) from ex
+
+            file.seek(0)
+            detected_encoding = CSVReader._detect_encoding(file)
+            if detected_encoding != encoding:
+                kwargs["encoding"] = detected_encoding
+                return CSVReader._read_csv(file, kwargs)
+            raise DatabaseUploadFailed(
+                message=_("Parsing error: %(error)s", error=str(ex))
+            ) from ex
         except (
             pd.errors.ParserError,
             pd.errors.EmptyDataError,

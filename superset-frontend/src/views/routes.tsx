@@ -127,6 +127,10 @@ const Tags = lazy(
   () => import(/* webpackChunkName: "Tags" */ 'src/pages/Tags'),
 );
 
+const Extensions = lazy(
+  () => import(/* webpackChunkName: "Tags" */ 'src/extensions/ExtensionsList'),
+);
+
 const RowLevelSecurityList = lazy(
   () =>
     import(
@@ -173,6 +177,10 @@ const MaterialLibraryList: LazyExoticComponent<any> = lazy(
     ),
 );
 
+const FileHandler = lazy(
+  () => import(/* webpackChunkName: "FileHandler" */ 'src/pages/FileHandler'),
+);
+
 type Routes = {
   path: string;
   Component: ComponentType;
@@ -200,6 +208,10 @@ export const routes: Routes = [
   {
     path: '/superset/welcome/',
     Component: Home,
+  },
+  {
+    path: '/superset/file-handler',
+    Component: FileHandler,
   },
   {
     path: '/dashboard/list/',
@@ -341,6 +353,13 @@ if (isAdmin) {
       Component: MaterialLibraryList,
     },
   );
+
+  if (isFeatureEnabled(FeatureFlag.EnableExtensions)) {
+    routes.push({
+      path: '/extensions/list/',
+      Component: Extensions,
+    });
+  }
 }
 
 if (authRegistrationEnabled) {

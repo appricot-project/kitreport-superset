@@ -98,7 +98,7 @@ def get_samples(  # pylint: disable=too-many-arguments
 ) -> dict[str, Any]:
     datasource = DatasourceDAO.get_datasource(
         datasource_type=datasource_type,
-        datasource_id=datasource_id,
+        database_id_or_uuid=str(datasource_id),
     )
 
     limit_clause = get_limit_clause(page, per_page)
@@ -153,6 +153,12 @@ def get_samples(  # pylint: disable=too-many-arguments
     )
 
     try:
+        # Enforce access control before fetching data.
+        # This prevents users with "can samples on Datasource" permission from
+        # reading samples from datasets they don't have access to.
+        samples_instance.raise_for_access()
+        count_star_instance.raise_for_access()
+
         count_star_data = count_star_instance.get_payload()["queries"][0]
 
         if count_star_data.get("status") == QueryStatus.FAILED:

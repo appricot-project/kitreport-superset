@@ -21,21 +21,26 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
+
+const { ModuleFederationPlugin } = webpack.container;
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const CopyPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const LightningCSS = require('lightningcss');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const {
   WebpackManifestPlugin,
   getCompilerHooks,
 } = require('webpack-manifest-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const parsedArgs = require('yargs').argv;
 const Visualizer = require('webpack-visualizer-plugin2');
 const getProxyConfig = require('./webpack.proxy-config');
-const packageConfig = require('./package');
+const packageConfig = require('./package.json');
 
 // input dir
 const APP_DIR = path.resolve(__dirname, './');
@@ -50,28 +55,47 @@ const MINI_CSS_EXTRACT_PUBLICPATH = './';
 
 const {
   mode = 'development',
-  devserverPort = 9000,
+  devserverPort: cliPort,
+  devserverHost: cliHost,
   measure = false,
   nameChunks = false,
 } = parsedArgs;
 
+// Precedence: CLI args > env vars > defaults
+const devserverPort = cliPort || process.env.WEBPACK_DEVSERVER_PORT || 9000;
+const devserverHost =
+  cliHost || process.env.WEBPACK_DEVSERVER_HOST || '127.0.0.1';
+
 const isDevMode = mode !== 'production';
-const isDevServer = process.argv[1].includes('webpack-dev-server');
+const isDevServer = process.argv[1]?.includes('webpack-dev-server') ?? false;
+
+// TypeScript checker memory limit (in MB)
+const TYPESCRIPT_MEMORY_LIMIT = 8192;
+
+const defaultEntryFilename = isDevMode
+  ? '[name].[contenthash:8].entry.js'
+  : nameChunks
+    ? '[name].[chunkhash].entry.js'
+    : '[name].[chunkhash].entry.js';
+
+const defaultChunkFilename = isDevMode
+  ? '[name].[contenthash:8].chunk.js'
+  : nameChunks
+    ? '[name].[chunkhash].chunk.js'
+    : '[chunkhash].chunk.js';
 
 const output = {
   path: BUILD_DIR,
   publicPath: '/static/assets/',
+  filename: pathData =>
+    pathData.chunk?.name === 'service-worker'
+      ? '../service-worker.js'
+      : defaultEntryFilename,
+  chunkFilename: pathData =>
+    pathData.chunk?.name === 'service-worker'
+      ? '../service-worker.js'
+      : defaultChunkFilename,
 };
-if (isDevMode) {
-  output.filename = '[name].[contenthash:8].entry.js';
-  output.chunkFilename = '[name].[contenthash:8].chunk.js';
-} else if (nameChunks) {
-  output.filename = '[name].[chunkhash].entry.js';
-  output.chunkFilename = '[name].[chunkhash].chunk.js';
-} else {
-  output.filename = '[name].[chunkhash].entry.js';
-  output.chunkFilename = '[chunkhash].chunk.js';
-}
 
 if (!isDevMode) {
   output.clean = true;
@@ -127,7 +151,11 @@ const plugins = [
   }),
 
   new CopyPlugin({
-    patterns: ['package.json', { from: 'src/assets/images', to: 'images' }],
+    patterns: [
+      'package.json',
+      { from: 'src/assets/images', to: 'images' },
+      { from: 'src/pwa-manifest.json', to: 'pwa-manifest.json' },
+    ],
   }),
 
   // static pages
@@ -143,10 +171,42 @@ const plugins = [
     chunks: [],
     filename: '500.html',
   }),
+  new ModuleFederationPlugin({
+    name: 'superset',
+    filename: 'remoteEntry.js',
+    shared: {
+      react: {
+        singleton: true,
+        eager: true,
+        requiredVersion: packageConfig.dependencies.react,
+      },
+      'react-dom': {
+        singleton: true,
+        eager: true,
+        requiredVersion: packageConfig.dependencies['react-dom'],
+      },
+      antd: {
+        singleton: true,
+        requiredVersion: packageConfig.dependencies.antd,
+        eager: true,
+      },
+    },
+  }),
 ];
 
 if (!process.env.CI) {
   plugins.push(new webpack.ProgressPlugin());
+}
+
+// Add React Refresh plugin for development mode
+if (isDevMode) {
+  plugins.push(
+    new ReactRefreshWebpackPlugin({
+      // Exclude service worker from React Refresh - it runs in a worker context
+      // without DOM/window and doesn't need HMR
+      exclude: /service-worker/,
+    }),
+  );
 }
 
 if (!isDevMode) {
@@ -157,46 +217,25 @@ if (!isDevMode) {
       chunkFilename: '[name].[chunkhash].chunk.css',
     }),
   );
+}
 
-  // Runs type checking on a separate process to speed up the build
+// TypeScript type checking configuration
+// SWC handles transpilation, but we still need ForkTsCheckerWebpackPlugin
+// to generate .d.ts files for the plugin packages
+if (!isDevMode) {
   plugins.push(
     new ForkTsCheckerWebpackPlugin({
+      async: false,
       typescript: {
-        memoryLimit: 4096,
-        build: true,
-        exclude: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/coverage/**',
-          '**/storybook/**',
-          '**/*.stories.{ts,tsx,js,jsx}',
-          '**/*.{test,spec}.{ts,tsx,js,jsx}',
-        ],
-        configFile: path.resolve(__dirname, 'tsconfig.json'),
+        memoryLimit: TYPESCRIPT_MEMORY_LIMIT,
+        build: true, // CRITICAL: Generate .d.ts files for plugins
+        mode: 'write-references', // Handle project references
         configOverwrite: {
           compilerOptions: {
             skipLibCheck: true,
-            noImplicitAny: false,
+            incremental: true,
           },
-          exclude: [
-            'node_modules',
-            '**/*.stories.*',
-            '**/*.test.*',
-            '**/*.spec.*',
-          ],
         },
-      },
-      issue: {
-        exclude: [
-          { file: '**/node_modules/**' },
-          { file: '**/@deck.gl/**' },
-          { origin: 'typescript' },
-        ],
-      },
-      logger: {
-        infrastructure: 'silent',
-        issues: 'console',
-        devServer: false,
       },
     }),
   );
@@ -217,33 +256,64 @@ function addPreamble(entry) {
   return PREAMBLE.concat([path.join(APP_DIR, entry)]);
 }
 
-const babelLoader = {
-  loader: 'babel-loader',
-  options: {
-    cacheDirectory: true,
-    // disable gzip compression for cache files
-    // faster when there are millions of small files
-    cacheCompression: false,
-    presets: [
-      [
-        '@babel/preset-react',
-        {
-          runtime: 'automatic',
-          importSource: '@emotion/react',
+// SWC configuration for TypeScript/JavaScript transpilation
+function createSwcLoader(syntax = 'typescript', tsx = true) {
+  return {
+    loader: 'swc-loader',
+    options: {
+      jsc: {
+        parser: {
+          syntax,
+          tsx: syntax === 'typescript' ? tsx : undefined,
+          jsx: syntax === 'ecmascript',
+          decorators: false,
+          dynamicImport: true,
         },
-      ],
-    ],
-    plugins: [
-      [
-        '@emotion/babel-plugin',
-        {
-          autoLabel: 'dev-only',
-          labelFormat: '[local]',
+        transform: {
+          react: {
+            runtime: 'automatic',
+            importSource: '@emotion/react',
+            development: isDevMode,
+            refresh: isDevMode,
+          },
         },
-      ],
-    ],
-  },
-};
+        target: 'es2015',
+        loose: true,
+        externalHelpers: false,
+        experimental: {
+          plugins: [
+            [
+              '@swc/plugin-emotion',
+              {
+                sourceMap: isDevMode,
+                autoLabel: isDevMode ? 'dev-only' : 'never',
+                labelFormat: '[local]',
+              },
+            ],
+            [
+              '@swc/plugin-transform-imports',
+              {
+                lodash: {
+                  transform: 'lodash/{{member}}',
+                  preventFullImport: true,
+                  skipDefaultConversion: false,
+                },
+                'lodash-es': {
+                  transform: 'lodash-es/{{member}}',
+                  preventFullImport: true,
+                  skipDefaultConversion: false,
+                },
+              },
+            ],
+          ],
+        },
+      },
+      module: {
+        type: 'es6',
+      },
+    },
+  };
+}
 
 const config = {
   entry: {
@@ -252,6 +322,7 @@ const config = {
     menu: addPreamble('src/views/menu.tsx'),
     spa: addPreamble('/src/views/index.tsx'),
     embedded: addPreamble('/src/embedded/index.tsx'),
+    'service-worker': path.join(APP_DIR, 'src/service-worker.ts'),
   },
   cache: {
     type: 'filesystem', // Enable filesystem caching
@@ -338,11 +409,40 @@ const config = {
       },
     },
     usedExports: 'global',
-    minimizer: [new CssMinimizerPlugin(), '...'],
+    minimizer: [
+      new CssMinimizerPlugin({
+        minify: CssMinimizerPlugin.lightningCssMinify,
+        minimizerOptions: {
+          targets: LightningCSS.browserslistToTargets([
+            'last 3 chrome versions',
+            'last 3 firefox versions',
+            'last 3 safari versions',
+            'last 3 edge versions',
+          ]),
+        },
+      }),
+      new TerserPlugin({
+        minify: TerserPlugin.swcMinify,
+        terserOptions: {
+          compress: {
+            drop_console: false,
+          },
+          mangle: true,
+          format: {
+            comments: false,
+          },
+        },
+      }),
+    ],
   },
   resolve: {
     // resolve modules from `/superset_frontend/node_modules` and `/superset_frontend`
-    modules: ['node_modules', APP_DIR],
+    modules: [
+      'node_modules',
+      APP_DIR,
+      path.resolve(APP_DIR, 'packages'),
+      path.resolve(APP_DIR, 'plugins'),
+    ],
     alias: {
       react: path.resolve(path.join(APP_DIR, './node_modules/react')),
       // TODO: remove Handlebars alias once Handlebars NPM package has been updated to
@@ -391,29 +491,8 @@ const config = {
       },
       {
         test: /\.tsx?$/,
-        exclude: [/\.test.tsx?$/],
-        use: [
-          'thread-loader',
-          babelLoader,
-          {
-            loader: 'ts-loader',
-            options: {
-              // transpile only in happyPack mode
-              // type checking is done via fork-ts-checker-webpack-plugin
-              happyPackMode: true,
-              transpileOnly: true,
-              // must override compiler options here, even though we have set
-              // the same options in `tsconfig.json`, because they may still
-              // be overridden by `tsconfig.json` in node_modules subdirectories.
-              compilerOptions: {
-                esModuleInterop: false,
-                importHelpers: false,
-                module: 'esnext',
-                target: 'esnext',
-              },
-            },
-          },
-        ],
+        exclude: [/\.test.tsx?$/, /node_modules/],
+        use: ['thread-loader', createSwcLoader('typescript', true)],
       },
       {
         test: /\.jsx?$/,
@@ -426,19 +505,11 @@ const config = {
           ), // redundant but required for windows
           /@encodable/,
         ],
-        use: [babelLoader],
+        use: [createSwcLoader('ecmascript')],
       },
       {
         test: /ace-builds.*\/worker-.*$/,
         type: 'asset/resource',
-      },
-      // react-hot-loader use "ProxyFacade", which is a wrapper for react Component
-      // see https://github.com/gaearon/react-hot-loader/issues/1311
-      // TODO: refactor recurseReactClone
-      {
-        test: /\.js$/,
-        include: /node_modules\/react-dom/,
-        use: ['react-hot-loader/webpack'],
       },
       {
         test: /\.css$/,
@@ -536,6 +607,16 @@ const config = {
   },
   plugins,
   devtool: isDevMode ? 'eval-cheap-module-source-map' : false,
+  watchOptions: isDevMode
+    ? {
+        // Watch all plugin and package source directories
+        ignored: ['**/node_modules', '**/.git', '**/lib', '**/esm', '**/dist'],
+        // Poll less frequently to reduce file handles
+        poll: 2000,
+        // Aggregate changes for 500ms before rebuilding
+        aggregateTimeout: 500,
+      }
+    : undefined,
 };
 
 // find all the symlinked plugins and use their source code for imports
@@ -543,7 +624,10 @@ Object.entries(packageConfig.dependencies).forEach(([pkg, relativeDir]) => {
   const srcPath = path.join(APP_DIR, `./node_modules/${pkg}/src`);
   const dir = relativeDir.replace('file:', '');
 
-  if (/^@superset-ui/.test(pkg) && fs.existsSync(srcPath)) {
+  if (
+    (pkg.startsWith('@superset-ui') || pkg.startsWith('@apache-superset')) &&
+    fs.existsSync(srcPath)
+  ) {
     console.log(`[Superset Plugin] Use symlink source for ${pkg} @ ${dir}`);
     config.resolve.alias[pkg] = path.resolve(APP_DIR, `${dir}/src`);
   }
@@ -569,7 +653,18 @@ if (isDevMode) {
     },
     historyApiFallback: true,
     hot: true,
+    host: devserverHost,
     port: devserverPort,
+    allowedHosts: [
+      ...new Set([
+        devserverHost,
+        'localhost',
+        '.localhost',
+        '127.0.0.1',
+        '::1',
+        '.local',
+      ]),
+    ],
     proxy: [() => proxyConfig],
     client: {
       overlay: {

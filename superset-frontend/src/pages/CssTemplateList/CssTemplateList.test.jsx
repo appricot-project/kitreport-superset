@@ -29,6 +29,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 
 import CssTemplatesList from 'src/pages/CssTemplateList';
+import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
 
 const mockStore = configureStore([thunk]);
 const store = mockStore({});
@@ -38,7 +39,7 @@ const templatesEndpoint = 'glob:*/api/v1/css_template/?*';
 const templateEndpoint = 'glob:*/api/v1/css_template/*';
 const templatesRelatedEndpoint = 'glob:*/api/v1/css_template/related/*';
 
-const mocktemplates = [...new Array(3)].map((_, i) => ({
+const mocktemplates = new Array(3).fill().map((_, i) => ({
   changed_on_delta_humanized: `${i} day(s) ago`,
   created_by: {
     first_name: `user`,
@@ -75,7 +76,7 @@ fetchMock.get(templatesRelatedEndpoint, {
 const renderCssTemplatesList = (props = {}) =>
   render(
     <MemoryRouter>
-      <QueryParamProvider>
+      <QueryParamProvider adapter={ReactRouter5Adapter}>
         <CssTemplatesList user={mockUser} {...props} />
       </QueryParamProvider>
     </MemoryRouter>,
@@ -85,46 +86,47 @@ const renderCssTemplatesList = (props = {}) =>
     },
   );
 
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('CssTemplatesList', () => {
   beforeEach(() => {
-    fetchMock.resetHistory();
+    fetchMock.clearHistory();
   });
 
-  it('renders', async () => {
+  test('renders', async () => {
     renderCssTemplatesList();
     expect(await screen.findByText(/css templates/i)).toBeInTheDocument();
   });
 
-  it('renders a SubMenu', async () => {
+  test('renders a SubMenu', async () => {
     renderCssTemplatesList();
     expect(await screen.findByRole('navigation')).toBeInTheDocument();
   });
 
-  it('renders a ListView', async () => {
+  test('renders a ListView', async () => {
     renderCssTemplatesList();
     expect(
       await screen.findByTestId('css-templates-list-view'),
     ).toBeInTheDocument();
   });
 
-  it('fetches templates', async () => {
+  test('fetches templates', async () => {
     renderCssTemplatesList();
     await waitFor(() => {
-      const calls = fetchMock.calls(/css_template\/\?q/);
+      const calls = fetchMock.callHistory.calls(/css_template\/\?q/);
       expect(calls).toHaveLength(1);
-      expect(calls[0][0]).toContain(
+      expect(calls[0].url).toContain(
         'order_column:template_name,order_direction:desc,page:0,page_size:25',
       );
     });
   });
 
-  it('renders Filters', async () => {
+  test('renders Filters', async () => {
     renderCssTemplatesList();
     await screen.findByTestId('css-templates-list-view');
     expect(screen.getByPlaceholderText(/type a value/i)).toBeInTheDocument();
   });
 
-  it('searches', async () => {
+  test('searches', async () => {
     renderCssTemplatesList();
 
     // Wait for list to load
@@ -137,15 +139,15 @@ describe('CssTemplatesList', () => {
 
     // Wait for search API call
     await waitFor(() => {
-      const calls = fetchMock.calls(/css_template\/\?q/);
+      const calls = fetchMock.callHistory.calls(/css_template\/\?q/);
       const searchCall = calls.find(call =>
-        call[0].includes('filters:!((col:template_name,opr:ct,value:fooo))'),
+        call.url.includes('filters:!((col:template_name,opr:ct,value:fooo))'),
       );
       expect(searchCall).toBeTruthy();
     });
   });
 
-  it('deletes', async () => {
+  test('deletes', async () => {
     renderCssTemplatesList();
 
     // Wait for list to load
@@ -169,11 +171,13 @@ describe('CssTemplatesList', () => {
 
     // Wait for delete request
     await waitFor(() => {
-      expect(fetchMock.calls(/css_template\/0/, 'DELETE')).toHaveLength(1);
+      expect(
+        fetchMock.callHistory.calls(/css_template\/0/, 'DELETE'),
+      ).toHaveLength(1);
     });
   });
 
-  it('shows bulk actions when bulk select is clicked', async () => {
+  test('shows bulk actions when bulk select is clicked', async () => {
     renderCssTemplatesList();
 
     // Wait for list to load
