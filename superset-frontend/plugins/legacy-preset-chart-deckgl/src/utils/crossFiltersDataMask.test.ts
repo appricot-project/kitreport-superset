@@ -17,7 +17,6 @@
  * under the License.
  */
 import { TimeGranularity } from '@superset-ui/core';
-import { PickingInfo } from '@deck.gl/core';
 import {
   getCrossFilterDataMask,
   LayerFormData,
@@ -54,10 +53,10 @@ const pickingData = {
   layer: {},
   x: 172,
   y: 116.484375,
-} as unknown as PickingInfo;
+} as any;
 
 describe('getCrossFilterDataMask', () => {
-  it('handles latlong type', () => {
+  test('handles latlong type', () => {
     const latlongFormData = {
       ...formData,
       spatial: {
@@ -125,7 +124,7 @@ describe('getCrossFilterDataMask', () => {
     expect(dataMask).toStrictEqual(expected);
   });
 
-  it('handles latlong type with active filters', () => {
+  test('handles latlong type with active filters', () => {
     const latlongFormData = {
       ...formData,
       spatial: {
@@ -183,7 +182,7 @@ describe('getCrossFilterDataMask', () => {
     expect(dataMask).toStrictEqual(expected);
   });
 
-  it('handles delimited type', () => {
+  test('handles delimited type', () => {
     const delimitedFormData = {
       ...formData,
       spatial: {
@@ -236,7 +235,7 @@ describe('getCrossFilterDataMask', () => {
     expect(dataMask).toStrictEqual(expected);
   });
 
-  it('handles delimited type with reversed lon/lat', () => {
+  test('handles delimited type with reversed lon/lat', () => {
     const delimitedFormData = {
       ...formData,
       spatial: {
@@ -290,7 +289,7 @@ describe('getCrossFilterDataMask', () => {
     expect(dataMask).toStrictEqual(expected);
   });
 
-  it('handles geohash type', () => {
+  test('handles geohash type', () => {
     const geohashFormData = {
       ...formData,
       spatial: {
@@ -339,7 +338,7 @@ describe('getCrossFilterDataMask', () => {
     expect(dataMask).toStrictEqual(expected);
   });
 
-  it('handles start and end postions (Arc Chart)', () => {
+  test('handles start and end postions (Arc Chart)', () => {
     const arcFormData = {
       ...formData,
       start_spatial: {
@@ -400,7 +399,7 @@ describe('getCrossFilterDataMask', () => {
     expect(dataMask).toStrictEqual(expected);
   });
 
-  it('handles Charts with GPU aggregation', () => {
+  test('handles Charts with GPU aggregation', () => {
     const latlongGPUFormData = {
       ...formData,
       spatial: {

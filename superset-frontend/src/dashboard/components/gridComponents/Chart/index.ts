@@ -18,6 +18,4 @@
  */
 import Chart from './Chart';
 
-export { default } from './Sparkline';
-
 export default Chart;

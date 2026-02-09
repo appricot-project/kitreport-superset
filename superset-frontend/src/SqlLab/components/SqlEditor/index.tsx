@@ -787,7 +787,12 @@ const SqlEditor: FC<Props> = ({
 
   const onSaveQuery = async (query: QueryPayload, clientId: string) => {
     const savedQuery = await dispatch(saveQuery(query, clientId));
-    dispatch(addSavedQueryToTabState(queryEditor, savedQuery));
+    dispatch(
+      addSavedQueryToTabState(
+        queryEditor,
+        savedQuery as unknown as { remoteId: string },
+      ),
+    );
   };
 
   const renderEditorPrimaryAction = () => {
@@ -946,14 +951,15 @@ const SqlEditor: FC<Props> = ({
     />
   );
 
-  const queryPane = () => {
-    const height = sqlEditorRef.current?.clientHeight || 600;
-    const aceEditorHeight = Math.floor((height * northPercent) / 100);
-
-    return (
-      <Splitter
-        onResizeStart={onResizeStart}
-        onResizeEnd={onResizeEnd}
+  const queryPane = () => (
+    <Splitter
+      layout="vertical"
+      onResizeStart={onResizeStart}
+      onResizeEnd={onResizeEnd}
+    >
+      <Splitter.Panel
+        min={queryEditor.isDataset ? 400 : 200}
+        defaultSize={`${northPercent}%`}
         className="queryPane"
       >
         <div className="north-pane">

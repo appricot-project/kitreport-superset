@@ -65,7 +65,6 @@ const QueryHistory = ({
   const { id, tabViewId } = useQueryEditor(String(queryEditorId), [
     'tabViewId',
   ]);
-  const theme = useTheme();
   const editorId = tabViewId ?? id;
   const [ref, hasReachedBottom] = useInView({ threshold: 0 });
   const [pageIndex, setPageIndex] = useState(0);
@@ -148,7 +147,7 @@ const QueryHistory = ({
         />
       )}
       {isFetching && <Skeleton active />}
-    </div>
+    </>
   ) : (
     <StyledEmptyStateWrapper>
       <EmptyState

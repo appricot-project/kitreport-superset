@@ -40,13 +40,7 @@ import {
   ConditionalFormattingConfig,
   ConditionalFormattingFlag,
 } from './types';
-
-// TODO: tangled redefinition that aligns with @superset-ui/plugin-chart-table
-// used to be imported but main app shouldn't depend on plugins...
-export enum ColorSchemeEnum {
-  'Green' = 'Green',
-  'Red' = 'Red',
-}
+import { ColorSchemeEnum } from 'plugins/plugin-chart-ag-grid-table/lib/types';
 
 const FullWidthInputNumber = styled(InputNumber)`
   width: 100%;
@@ -329,8 +323,6 @@ export const FormattingPopoverContent = ({
   const [previousColumnType, setPreviousColumnType] = useState<
     GenericDataType | undefined
   >();
-
-  const [form] = Form.useForm();
 
   const columnType = useMemo(
     () => columns.find(item => item.value === column)?.dataType,

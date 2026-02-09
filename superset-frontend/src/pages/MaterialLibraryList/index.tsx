@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { t, styled } from '@superset-ui/core';
+import { t } from '@apache-superset/core';
+import { styled } from '@apache-superset/core/ui';
 import { EmptyState } from '@superset-ui/core/components';
 import {
   Button,

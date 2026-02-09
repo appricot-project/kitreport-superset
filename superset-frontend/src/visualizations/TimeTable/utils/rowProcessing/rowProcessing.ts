@@ -16,24 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import type { TimeTableData, Entry } from '../../types';
 
-// Re-export AG Grid types from @superset-ui/core for convenience
-import type { AgGridChartState } from '@superset-ui/core';
+/**
+ * Converts raw time table data into sorted entries
+ */
+export function processTimeTableData(data: TimeTableData): {
+  entries: Entry[];
+  reversedEntries: Entry[];
+} {
+  const entries: Entry[] = Object.keys(data)
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+    .map(time => ({ ...data[time], time }));
 
-export type {
-  AgGridSortModel,
-  AgGridFilter,
-  AgGridFilterModel,
-  AgGridChartState,
-} from '@superset-ui/core';
+  const reversedEntries = [...entries].reverse();
 
-export interface ChartState {
-  chartId: number;
-  vizType: string;
-  state: AgGridChartState;
-  lastModified?: number;
-}
-
-export interface DashboardChartStates {
-  [chartId: string]: ChartState;
+  return { entries, reversedEntries };
 }

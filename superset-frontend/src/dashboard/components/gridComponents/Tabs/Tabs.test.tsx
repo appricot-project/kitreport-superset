@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import React from 'react';
+
 import {
   render,
   screen,
@@ -28,7 +30,9 @@ import DashboardComponent from 'src/dashboard/containers/DashboardComponent';
 import DeleteComponentButton from 'src/dashboard/components/DeleteComponentButton';
 import getLeafComponentIdFromPath from 'src/dashboard/util/getLeafComponentIdFromPath';
 import emptyDashboardLayout from 'src/dashboard/fixtures/emptyDashboardLayout';
-import Tabs from './Tabs';
+import TabsComponent from './Tabs';
+
+const Tabs = TabsComponent as unknown as React.FC<Record<string, unknown>>;
 
 jest.mock('src/dashboard/containers/DashboardComponent', () =>
   jest.fn(props => (
@@ -109,6 +113,7 @@ const createProps = () => ({
   renderTabContent: true,
   renderHoverMenu: true,
   logEvent: jest.fn(),
+  setActiveTab: jest.fn(),
   createComponent: jest.fn(),
   handleComponentDrop: jest.fn(),
   onChangeTab: jest.fn(),
@@ -137,7 +142,7 @@ test('Should render editMode:true', () => {
 });
 
 test('Should render HoverMenu in editMode', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   const { container } = render(<Tabs {...props} />, {
     useRedux: true,
     useDnd: true,
@@ -147,7 +152,7 @@ test('Should render HoverMenu in editMode', () => {
 });
 
 test('Should not render HoverMenu when not in editMode', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   props.editMode = false;
   const { container } = render(<Tabs {...props} />, {
     useRedux: true,
@@ -157,7 +162,7 @@ test('Should not render HoverMenu when not in editMode', () => {
 });
 
 test('Should not render HoverMenu when renderHoverMenu is false', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   props.renderHoverMenu = false;
   const { container } = render(<Tabs {...props} />, {
     useRedux: true,
@@ -167,7 +172,7 @@ test('Should not render HoverMenu when renderHoverMenu is false', () => {
 });
 
 test('Should render editMode:false', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   props.editMode = false;
   render(<Tabs {...props} />, {
     useRedux: true,
@@ -185,7 +190,7 @@ test('Should render editMode:false', () => {
 });
 
 test('Update component props', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   (getLeafComponentIdFromPath as jest.Mock).mockResolvedValueOnce('none');
   props.editMode = false;
   const { rerender } = render(<Tabs {...props} />, {
@@ -200,7 +205,7 @@ test('Update component props', () => {
 });
 
 test('Clicking on "DeleteComponentButton"', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   render(<Tabs {...props} />, {
     useRedux: true,
     useDnd: true,
@@ -215,7 +220,7 @@ test('Clicking on "DeleteComponentButton"', () => {
 });
 
 test('Add new tab', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   render(<Tabs {...props} />, {
     useRedux: true,
     useDnd: true,
@@ -227,7 +232,7 @@ test('Add new tab', () => {
 });
 
 test('Removing a tab', async () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   render(<Tabs {...props} />, {
     useRedux: true,
     useDnd: true,
@@ -246,7 +251,7 @@ test('Removing a tab', async () => {
 });
 
 test('Switching tabs', () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   render(<Tabs {...props} />, {
     useRedux: true,
     useDnd: true,
@@ -260,7 +265,7 @@ test('Switching tabs', () => {
 });
 
 test('Call "DashboardComponent.onDropOnTab"', async () => {
-  const props = createProps();
+  const props = { ...createProps(), setActiveTab: jest.fn() };
   render(<Tabs {...props} />, {
     useRedux: true,
     useDnd: true,

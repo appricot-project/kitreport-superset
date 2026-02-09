@@ -47,11 +47,13 @@ const LABELS = {
     [WelcomeTable.Charts]: t('Chart'),
     [WelcomeTable.Dashboards]: t('Dashboard'),
     [WelcomeTable.SavedQueries]: t('SQL query'),
+    [WelcomeTable.MaterialLibrary]: t('Material'),
   },
   viewAll: {
     [WelcomeTable.Charts]: t('charts'),
     [WelcomeTable.Dashboards]: t('dashboards'),
     [WelcomeTable.SavedQueries]: t('SQL Lab queries'),
+    [WelcomeTable.MaterialLibrary]: t('materials'),
   },
 } as const;
 
@@ -60,11 +62,13 @@ const REDIRECTS = {
     [WelcomeTable.Charts]: '/chart/add',
     [WelcomeTable.Dashboards]: '/dashboard/new',
     [WelcomeTable.SavedQueries]: makeUrl('/sqllab?new=true'),
+    [WelcomeTable.MaterialLibrary]: '/',
   },
   viewAll: {
     [WelcomeTable.Charts]: '/chart/list',
     [WelcomeTable.Dashboards]: '/dashboard/list/',
     [WelcomeTable.SavedQueries]: '/savedqueryview/list/',
+    [WelcomeTable.MaterialLibrary]: '/',
   },
 } as const;
 

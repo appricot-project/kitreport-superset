@@ -34,7 +34,6 @@ import {
   useMemo,
   type Ref,
 } from 'react';
-import type AceEditor from 'react-ace';
 import type { editors } from '@apache-superset/core';
 import {
   FullSQLEditor,
@@ -92,7 +91,7 @@ const toAceAnnotation = (annotation: EditorAnnotation) => ({
  * Creates an EditorHandle implementation backed by an Ace editor instance.
  */
 const createAceEditorHandle = (
-  aceEditorRef: React.RefObject<AceEditor>,
+  aceEditorRef: React.RefObject<any>,
   completionProviders: React.MutableRefObject<Map<string, CompletionProvider>>,
 ): EditorHandle => ({
   focus: () => {
@@ -218,7 +217,7 @@ const AceEditorProvider = forwardRef<EditorHandle, EditorProps>(
       onReady,
     } = props;
 
-    const aceEditorRef = useRef<AceEditor>(null);
+    const aceEditorRef = useRef<any>(null);
     const completionProviders = useRef<Map<string, CompletionProvider>>(
       new Map(),
     );
@@ -265,7 +264,7 @@ const AceEditorProvider = forwardRef<EditorHandle, EditorProps>(
 
     // Handle editor load
     const onEditorLoad = useCallback(
-      (editor: AceEditor['editor']) => {
+      (editor: any['editor']) => {
         // Register hotkeys
         if (hotkeys) {
           hotkeys.forEach(hotkey => {

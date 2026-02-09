@@ -17,7 +17,6 @@
  * under the License.
  */
 
-import { PickingInfo } from '@deck.gl/core';
 import { JsonObject, QueryFormData } from '@superset-ui/core';
 import {
   getAggFunc,
@@ -161,7 +160,7 @@ describe('commonLayerProps', () => {
       x: 172,
       y: 116.484375,
       object: { name: 'John Doe' },
-    } as unknown as PickingInfo;
+    } as any;
 
     props.onClick?.(pickingData, {});
     expect(mockOnSelect).toHaveBeenCalledWith('John Doe');

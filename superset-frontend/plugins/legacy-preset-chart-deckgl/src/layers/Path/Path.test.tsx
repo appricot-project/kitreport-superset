@@ -18,6 +18,7 @@
  */
 // eslint-disable-next-line import/no-extraneous-dependencies
 import '@testing-library/jest-dom';
+import { getLayer, getPoints, getHighlightLayer } from './Path';
 
 jest.mock('../../DeckGLContainer', () => ({
   DeckGLContainerStyledWrapper: ({ children }: any) => (
@@ -29,8 +30,6 @@ jest.mock('../../factory', () => ({
   createDeckGLComponent: jest.fn(() => () => null),
   GetLayerType: {},
 }));
-
-import { getLayer, getPoints, getHighlightLayer } from './Path';
 
 const mockFormData = {
   datasource: 'test_datasource',
@@ -65,7 +64,7 @@ test('getLayer uses line_width_unit from formData', () => {
     emitCrossFilters: false,
   });
 
-  expect(layer.props.widthUnits).toBe('meters');
+  expect((layer as any).widthUnits).toBe('meters');
 });
 
 test('getLayer uses pixels when line_width_unit is pixels', () => {
@@ -79,7 +78,7 @@ test('getLayer uses pixels when line_width_unit is pixels', () => {
     emitCrossFilters: false,
   });
 
-  expect(layer.props.widthUnits).toBe('pixels');
+  expect((layer as any).widthUnits).toBe('pixels');
 });
 
 test('getHighlightLayer uses line_width_unit from formData', () => {
@@ -93,7 +92,7 @@ test('getHighlightLayer uses line_width_unit from formData', () => {
     emitCrossFilters: false,
   });
 
-  expect(layer.props.widthUnits).toBe('meters');
+  expect((layer as any).widthUnits).toBe('meters');
 });
 
 test('getPoints extracts points from path data', () => {

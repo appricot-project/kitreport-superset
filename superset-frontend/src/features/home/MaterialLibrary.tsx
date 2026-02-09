@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { t, styled } from '@superset-ui/core';
+import { t } from '@apache-superset/core';
+import { styled } from '@apache-superset/core/ui';
+
 import { EmptyState, Loading } from '@superset-ui/core/components';
 
 import { TableTab } from 'src/views/CRUD/types';

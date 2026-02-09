@@ -35,7 +35,6 @@ import {
   QueryFormData,
   SetDataMaskHook,
 } from '@superset-ui/core';
-import type { Layer } from '@deck.gl/core';
 import Legend from './components/Legend';
 import { hexToRGB } from './utils/colors';
 import sandboxedEval from './utils/sandbox';
@@ -272,10 +271,10 @@ const CategoricalDeckGLContainer = (props: CategoricalDeckGLContainerProps) => {
       emitCrossFilters,
     };
 
-    const layer = getLayer(layerProps) as Layer;
+    const layer = getLayer(layerProps) as any;
 
     if (emitCrossFilters && filterState?.value && getHighlightLayer) {
-      const highlightLayer = getHighlightLayer(layerProps) as Layer;
+      const highlightLayer = getHighlightLayer(layerProps) as any;
 
       return [layer, highlightLayer];
     }
