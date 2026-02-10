@@ -38,6 +38,7 @@ cover
 .python-version
 .tox
 .vscode
+.superset/static/
 _build
 _images
 _modules
