@@ -1,6 +1,12 @@
-let brand = process.env.REACT_APP_BRAND || 'verk';
+// @ts-ignore - webpack defines process.env at build time
+const brand = process.env.REACT_APP_BRAND || 'verk';
 
-import { BrandingConfig } from '@superset-ui/core/theme/BrandingConfig';
+interface BrandingConfig {
+  appName: string;
+  logoPath: string;
+  primaryColor: string;
+  secondaryColor: string;
+}
 
 import { branding as algoritmyResheniyBranding } from './algoritmyResheniy/algoritmyResheniy';
 import { branding as lfkFinserviceBranding } from './lfk-finservice/lfk-finservice';

@@ -17,22 +17,32 @@
  * under the License.
  */
 
-import { ThemeProvider } from '@apache-superset/core/ui';
+import { themeObject, type Theme } from '@apache-superset/core/ui';
 import querystring from 'query-string';
+import { ReactNode } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
 
-export function ProviderWrapper(props: any) {
+interface ProviderWrapperProps {
+  children: ReactNode;
+  theme?: Theme;
+}
+
+export function ProviderWrapper(props: ProviderWrapperProps) {
   const { children, theme } = props;
+  const ThemeProvider = theme
+    ? theme.SupersetThemeProvider
+    : themeObject.SupersetThemeProvider;
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <Router>
         <QueryParamProvider
           adapter={ReactRouter5Adapter}
           options={{
             searchStringToObject: querystring.parse,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             objectToSearchString: (object: Record<string, any>) =>
               querystring.stringify(object, { encode: false }),
           }}

@@ -340,7 +340,15 @@ export function Menu({
             title={brand.tooltip}
             arrow={{ pointAtCenter: true }}
           >
-            {renderBrand()}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {renderBrand()}
+            </div>
           </Tooltip>
           {brand.text && (
             <StyledBrandText>

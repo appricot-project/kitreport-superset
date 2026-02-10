@@ -25,6 +25,7 @@ import {
   Theme,
   ThemeMode,
   themeObject as supersetThemeObject,
+  defaultThemeConfig as supersetDefaultThemeConfig,
   normalizeThemeConfig,
 } from '@apache-superset/core/ui';
 import { makeApi } from '@superset-ui/core';
@@ -106,7 +107,7 @@ export class ThemeController {
     storage = new LocalStorageAdapter(),
     modeStorageKey = STORAGE_KEYS.THEME_MODE,
     themeObject = supersetThemeObject,
-    defaultTheme = (supersetThemeObject.theme as AnyThemeConfig) ?? {},
+    defaultTheme = supersetDefaultThemeConfig,
     onChange = undefined,
   }: ThemeControllerOptions = {}) {
     this.storage = storage;
@@ -115,14 +116,28 @@ export class ThemeController {
     // Controller creates and owns the global theme
     this.globalTheme = themeObject;
 
+    const baseDefaultTheme = defaultTheme;
+
     // Initialize bootstrap data and themes
     const { bootstrapDefaultTheme, bootstrapDarkTheme }: BootstrapThemeData =
       this.loadBootstrapData();
 
-    // Set themes from bootstrap data
-    // These will be the THEME_DEFAULT and THEME_DARK from config
-    this.defaultTheme = bootstrapDefaultTheme || defaultTheme || null;
-    this.darkTheme = bootstrapDarkTheme;
+    if (bootstrapDefaultTheme && !this.isEmptyTheme(bootstrapDefaultTheme)) {
+      const mergedDefault = Theme.fromConfig(
+        bootstrapDefaultTheme,
+        baseDefaultTheme,
+      );
+      this.defaultTheme = mergedDefault.toSerializedConfig();
+    } else {
+      this.defaultTheme = baseDefaultTheme;
+    }
+
+    if (bootstrapDarkTheme && !this.isEmptyTheme(bootstrapDarkTheme)) {
+      const mergedDark = Theme.fromConfig(bootstrapDarkTheme, baseDefaultTheme);
+      this.darkTheme = mergedDark.toSerializedConfig();
+    } else {
+      this.darkTheme = null;
+    }
 
     // Initialize system theme detection
     this.systemMode = ThemeController.getSystemPreferredMode();

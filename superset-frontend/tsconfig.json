@@ -67,6 +67,7 @@
     "./plugins/**/*",
     "./packages/**/*",
     "./scripts/**/*",
+    "./branding/**/*",
     "./webpack.config.js",
     "./webpack*.js",
     "./package.json"

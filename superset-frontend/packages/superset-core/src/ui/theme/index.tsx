@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import emotionStyled, { CreateStyled } from '@emotion/styled';
+import emotionStyled, { type CreateStyled } from '@emotion/styled';
 import { useTheme as useThemeBasic } from '@emotion/react';
 import { Theme } from './Theme';
 import {
@@ -30,6 +30,21 @@ import {
   ThemeAlgorithm,
   ThemeMode,
 } from './types';
+import type { BrandingConfig } from './BrandingConfig';
+
+let brandingConfig: BrandingConfig;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  brandingConfig = require('../../../../../branding/index').default;
+} catch (error) {
+  console.warn('Failed to load branding config, using defaults:', error);
+  brandingConfig = {
+    appName: 'Superset',
+    logoPath: '/static/assets/images/superset-logo-horiz.png',
+    primaryColor: '#20a7c9',
+    secondaryColor: '#66bcfe',
+  };
+}
 
 export {
   css,
@@ -60,7 +75,37 @@ export function useTheme() {
 
 const styled: CreateStyled = emotionStyled;
 
-const themeObject: Theme = Theme.fromConfig();
+const defaultThemeConfig: AnyThemeConfig = {
+  token: {
+    colorPrimary: brandingConfig.primaryColor,
+    brandLogoUrl: brandingConfig.logoPath,
+    brandLogoAlt: brandingConfig.appName,
+    brandAppName: brandingConfig.appName,
+
+    brandLogoMargin: '18px',
+    brandLogoHref: '/',
+    brandLogoHeight: '24px',
+    brandIconMaxWidth: 37,
+
+    colorLink: '#2893B3',
+    colorError: '#e04355',
+    colorWarning: '#fcc700',
+    colorSuccess: '#5ac189',
+    colorInfo: '#66bcfe',
+
+    fontFamily: `'Inter', Helvetica, Arial`,
+    fontFamilyCode: `'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'Courier New', monospace`,
+
+    transitionTiming: 0.3,
+    fontSizeXS: '8',
+    fontSizeXXL: '28',
+    fontWeightNormal: '400',
+    fontWeightLight: '300',
+    fontWeightStrong: 600,
+  },
+};
+
+const themeObject: Theme = Theme.fromConfig(defaultThemeConfig);
 
 const { theme } = themeObject;
 const supersetTheme = theme;
@@ -73,6 +118,8 @@ export {
   styled,
   theme,
   supersetTheme,
+  brandingConfig,
+  defaultThemeConfig,
 };
 
 export type {
@@ -83,6 +130,7 @@ export type {
   ThemeControllerOptions,
   ThemeContextType,
   SupersetThemeConfig,
+  BrandingConfig,
 };
 
 // Export theme utility functions
