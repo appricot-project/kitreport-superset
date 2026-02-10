@@ -256,61 +256,12 @@ function addPreamble(entry) {
   return PREAMBLE.concat([path.join(APP_DIR, entry)]);
 }
 
-// SWC configuration for TypeScript/JavaScript transpilation
-function createSwcLoader(syntax = 'typescript', tsx = true) {
+// Babel-loader configuration for TypeScript/JavaScript transpиляция
+function createBabelLoader() {
   return {
-    loader: 'swc-loader',
+    loader: 'babel-loader',
     options: {
-      jsc: {
-        parser: {
-          syntax,
-          tsx: syntax === 'typescript' ? tsx : undefined,
-          jsx: syntax === 'ecmascript',
-          decorators: false,
-          dynamicImport: true,
-        },
-        transform: {
-          react: {
-            runtime: 'automatic',
-            importSource: '@emotion/react',
-            development: isDevMode,
-            refresh: isDevMode,
-          },
-        },
-        target: 'es2015',
-        loose: true,
-        externalHelpers: false,
-        experimental: {
-          plugins: [
-            [
-              '@swc/plugin-emotion',
-              {
-                sourceMap: isDevMode,
-                autoLabel: isDevMode ? 'dev-only' : 'never',
-                labelFormat: '[local]',
-              },
-            ],
-            [
-              '@swc/plugin-transform-imports',
-              {
-                lodash: {
-                  transform: 'lodash/{{member}}',
-                  preventFullImport: true,
-                  skipDefaultConversion: false,
-                },
-                'lodash-es': {
-                  transform: 'lodash-es/{{member}}',
-                  preventFullImport: true,
-                  skipDefaultConversion: false,
-                },
-              },
-            ],
-          ],
-        },
-      },
-      module: {
-        type: 'es6',
-      },
+      cacheDirectory: true,
     },
   };
 }
@@ -475,41 +426,30 @@ const config = {
   context: APP_DIR, // to automatically find tsconfig.json
   module: {
     rules: [
+      // Fix for geostyler ESM imports without extensions
       {
-        test: /datatables\.net.*/,
-        loader: 'imports-loader',
-        options: {
-          additionalCode: 'var define = false;',
-        },
-      },
-      {
-        test: /node_modules\/(@deck\.gl|@luma\.gl).*\.js$/,
-        loader: 'imports-loader',
-        options: {
-          additionalCode: 'var module = module || {exports: {}};',
+        test: /\.js$/,
+        include: /node_modules\/geostyler/,
+        resolve: {
+          fullySpecified: false,
         },
       },
       {
         test: /\.tsx?$/,
         exclude: [/\.test.tsx?$/, /node_modules/],
-        use: ['thread-loader', createSwcLoader('typescript', true)],
+        use: [createBabelLoader()],
       },
       {
         test: /\.jsx?$/,
-        // include source code for plugins, but exclude node_modules and test files within them
         exclude: [/superset-ui.*\/node_modules\//, /\.test.jsx?$/],
         include: [
           new RegExp(`${APP_DIR}/(src|.storybook|plugins|packages)`),
           ...['./src', './.storybook', './plugins', './packages'].map(p =>
             path.resolve(__dirname, p),
-          ), // redundant but required for windows
+          ),
           /@encodable/,
         ],
-        use: [createSwcLoader('ecmascript')],
-      },
-      {
-        test: /ace-builds.*\/worker-.*$/,
-        type: 'asset/resource',
+        use: [createBabelLoader()],
       },
       {
         test: /\.css$/,
@@ -604,6 +544,16 @@ const config = {
     cheerio: 'window',
     'react/lib/ExecutionEnvironment': true,
     'react/lib/ReactContext': true,
+    // Deck.gl v9 packages not used (project uses v8)
+    '@deck.gl/core': 'window.deck',
+    '@deck.gl/widgets': 'window.deck',
+    '@luma.gl/core': 'window.luma',
+    '@luma.gl/engine': 'window.luma',
+    '@luma.gl/constants': 'window.luma',
+    // Geostyler has ESM import issues with webpack 5
+    'geostyler-style': 'window.geostyler',
+    'geostyler-qgis-parser': 'window.geostyler',
+    'geostyler-cql-parser': 'window.geostyler',
   },
   plugins,
   devtool: isDevMode ? 'eval-cheap-module-source-map' : false,

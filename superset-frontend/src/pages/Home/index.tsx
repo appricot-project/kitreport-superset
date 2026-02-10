@@ -133,6 +133,37 @@ const WelcomeNav = styled.div`
   `}
 `;
 
+const PdfLinkContainer = styled.div`
+  ${({ theme }) => `
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: ${theme.sizeUnit * 10}px ${theme.sizeUnit * 6}px;
+    margin-top: ${theme.sizeUnit * 8}px;
+    
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: ${theme.sizeUnit * 2}px;
+      color: ${theme.colorPrimary};
+      font-size: 16px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        color: ${theme.colorPrimaryHover || theme.colorPrimary};
+        text-decoration: underline;
+      }
+      
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  `}
+`;
+
 const bootstrapData = getBootstrapData();
 
 export const LoadingCards = ({ cover }: LoadingProps) => (
@@ -447,6 +478,19 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
             />
           </>
         )}
+
+        <PdfLinkContainer>
+          <a href="/superset/pdf/" target="_self">
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 15.01L9.41 16.42L11 14.84V19H13V14.84L14.59 16.43L16 15.01L12.01 11L8 15.01Z" />
+            </svg>
+            {t('PDF Report Builder')}
+          </a>
+        </PdfLinkContainer>
       </WelcomeContainer>
     </>
   );
